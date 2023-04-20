@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Unofficial Github Copilot support
+Bundle-SymbolicName: org.vgcpge.eclipse.copilot.ui;singleton:=true
+Bundle-Version: 0.0.1.qualifier
+Require-Bundle: org.eclipse.lsp4e;bundle-version="0.15.0",
+ org.eclipse.lsp4j.jsonrpc;bundle-version="0.20.1",
+ org.eclipse.lsp4j,
+ org.eclipse.jdt.annotation,
+ com.google.gson;bundle-version="2.9.1"
+Automatic-Module-Name: org.vgcpge.eclipse.copilot.ui
+Bundle-RequiredExecutionEnvironment: JavaSE-17

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.lsp4e.languageServer">
+      <server
+            class="org.vgcpge.eclipse.copilot.ui.internal.GithubCopilotProvider"
+            id="org.vgcpge.eclipse.copilot.ui.copilot"
+            label="Github Copilot"
+            launcherBuilder="org.vgcpge.eclipse.copilot.ui.internal.LauncherBuilder">
+      </server>
+      <contentTypeMapping
+            contentType="org.eclipse.jdt.core.javaSource"
+            id="org.vgcpge.eclipse.copilot.ui.copilot">
+      </contentTypeMapping>
+   </extension>
+
+</plugin>
