@@ -8,8 +8,12 @@ public class CopilotInitializeResult extends InitializeResult {
 	@Override
 	public ServerCapabilities getCapabilities() {
 		var result = super.getCapabilities();
-		if (result.getCompletionProvider() == null) {
-			result.setCompletionProvider(new CompletionOptions());
+		CompletionOptions completionProvider = result.getCompletionProvider();
+		if (completionProvider == null) {
+			result.setCompletionProvider(completionProvider = new CompletionOptions());
+		}
+		if (completionProvider.getResolveProvider() == null) {
+			completionProvider.setResolveProvider(Boolean.FALSE);
 		}
 		return result;
 	}
