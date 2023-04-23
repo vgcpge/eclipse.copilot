@@ -22,7 +22,7 @@ public class TextDocumentPositionParams extends org.eclipse.lsp4j.VersionedTextD
 
 	private int tabSize = 4;
 
-	public TextDocumentPositionParams(String uri, Position position, int version) {
+	public TextDocumentPositionParams(String uri, Position position, int version, boolean insertSpaces) {
 		super(uri,  version);
 		this.position = Objects.requireNonNull(position);
 		this.insertSpaces = insertSpaces;

@@ -101,6 +101,10 @@ public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
 		if ("LogMessage".equals(notification.getMethod())) {
 			notification.setMethod("window/logMessage");
 			notification.setParams(adaptMessageParams(notification.getParams()));
+		} else if ("textDocument/didChange".equals(notification.getMethod())) {
+			DidChangeTextDocumentParams params = (DidChangeTextDocumentParams)notification.getParams();
+			// CompletionParams produced by Eclipse do not include document version, so version mismatch happens, is different versions are sent here
+			params.getTextDocument().setVersion(1);
 		}
 		return notification;
 	}
@@ -117,10 +121,6 @@ public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
 			request.setMethod("getCompletions");
 			request.setParams(adaptCompletionParams((CompletionParams) request.getParams()));
 			responseHooks.put(request.getId(), this::adaptCompletionResponse);
-		} else if ("textDocument/didChange".equals(request.getMethod())) {
-			DidChangeTextDocumentParams params = (DidChangeTextDocumentParams)request.getParams();
-			// CompletionParams produced by Eclipse do not include document version, so version mismatch happens, is different versions are sent here
-			params.getTextDocument().setVersion(1);
 		}
 		return request;
 	}
@@ -135,7 +135,7 @@ public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
 	 */
 	private Object adaptCompletionParams(CompletionParams params) {
 		TextDocumentIdentifier textDocument = params.getTextDocument();
-		TextDocumentPositionParams doc = new TextDocumentPositionParams(textDocument.getUri(), params.getPosition(), 1);
+		TextDocumentPositionParams doc = new TextDocumentPositionParams(textDocument.getUri(), params.getPosition(), 1, false);
 		return new org.vgcpge.eclipse.copilot.ui.internal.CompletionParams(doc);
 	}
 
