@@ -36,7 +36,7 @@ public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
 	private MessageJsonHandler jsonHandler;
 
 	{
-		wrapMessages(this::hookCompletion2);
+		wrapMessages(this::hookMessages);
 	}
 
 	@Override
@@ -64,18 +64,14 @@ public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
 	private JsonRpcMethod hookInitialize(String methodName, JsonRpcMethod original) {
 		assert "initialize".equals(methodName);
 		assert methodName.equals(original.getMethodName());
-		// Override default values for return type, to compensate for Copilot language
-		// server non-compilance
+		// Copilot does not use standard completion protocol, so it does not declare to be compatible with it
+		// LSP4E completions would not work with non-compatible servers, so we imitate completion capability by changing defaults for server response
 		return JsonRpcMethod.request(original.getMethodName(), CopilotInitializeResult.class,
 				original.getParameterTypes());
 
 	}
 
-	/**
-	 * Intercept and adapt
-	 * org.eclipse.lsp4j.services.TextDocumentService.completion(CompletionParams)
-	 */
-	private MessageConsumer hookCompletion2(MessageConsumer consumer) {
+	private MessageConsumer hookMessages(MessageConsumer consumer) {
 		return message -> {
 			if (message instanceof RequestMessage) {
 				message = adaptRequest((RequestMessage) message);
@@ -123,6 +119,7 @@ public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
 	}
 
 	private RequestMessage adaptRequest(RequestMessage request) {
+		// Copilot does not accept standard method for completions
 		if ("textDocument/completion".equals(request.getMethod())) {
 			// This does not work: Invalid params: must have required property 'doc'
 			request.setMethod("getCompletions");
