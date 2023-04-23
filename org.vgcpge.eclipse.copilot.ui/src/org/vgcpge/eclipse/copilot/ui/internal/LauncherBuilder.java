@@ -159,19 +159,25 @@ public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
 		Gson gson = jsonHandler.getGson();
 		var result = gson.fromJson(i, CompletionItem.class);
 		JsonObject object = i.getAsJsonObject();
-		result.setInsertText(object.get("text").getAsString());
-		result.setLabel(object.get("displayText").getAsString());
-		TextEdit textEdit = new TextEdit(gson.fromJson(object.get("range"), Range.class), object.get("text").getAsString());
-		// LSP4E does not like when offset of insertion is not exactly matching the offset of request
-		// Copilot adds indentation before the request offset, so we attempt to remove it, to hopefully make offset exactly match request offset
-		Matcher matcher = INDENT_PATTERN.matcher(textEdit.getNewText());
-		if (matcher.find()) {
-			textEdit.setNewText(textEdit.getNewText().substring(matcher.end()));
-			var start = textEdit.getRange().getStart();
-			start.setCharacter(start.getCharacter() + matcher.end());
-		}
+		String text = object.get("text").getAsString();
+		String displayText = object.get("displayText").getAsString();
+		result.setLabel(firstLine(displayText));
+		result.setDetail(displayText);
+		// Fixes #2. If filter is set, offset computation is based on substrings, producing stable results.
+		// See org.eclipse.lsp4e.operations.completion.LSCompletionProposal.validate(IDocument, int, DocumentEvent)
+		result.setFilterText(text); 
+		TextEdit textEdit = new TextEdit(gson.fromJson(object.get("range"), Range.class), text);
 		result.setTextEdit(Either.forLeft(textEdit));
 		return result;
+	}
+
+	private static String firstLine(String message) {
+		message = message.strip();
+		int position = message.indexOf('\n');
+		if (position <= 0) {
+			return message;
+		}
+		return message.substring(0, position);
 	}
 
 }
