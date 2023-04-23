@@ -1,33 +1,41 @@
 package org.vgcpge.eclipse.copilot.ui.internal;
 
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
-import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.lsp4e.server.ProcessStreamConnectionProvider;
-import org.eclipse.lsp4j.InitializeResult;
-import org.eclipse.lsp4j.jsonrpc.messages.Message;
-import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
-import org.eclipse.lsp4j.services.LanguageServer;
-
-import org.eclipse.jdt.annotation.Nullable;
-import org.eclipse.lsp4j.jsonrpc.messages.Message;
-import org.eclipse.lsp4j.services.LanguageServer;
 
 public class GithubCopilotProvider extends ProcessStreamConnectionProvider {
+	private static final Path NVIM_RELATIVE_PATH = Path.of("nvim", "pack", "github", "start", "copilot.vim", "copilot",
+			"dist", "agent.js");
+
 	public GithubCopilotProvider() {
-		super(Arrays.asList("node",
-				System.getProperty("user.home") + "/.config/nvim/pack/github/start/copilot.vim/copilot/dist/agent.js"),
+		super(Arrays.asList("node", findAgent().toString()),
 				Paths.get(URI.create(System.getProperty("osgi.instance.area"))).toString());
 	}
-	
-	@Override
-	public void handleMessage(Message message, LanguageServer languageServer, @Nullable URI rootURI) {
-		if (message instanceof ResponseMessage responseMessage) {
-			if (responseMessage.getResult() instanceof InitializeResult) {
-			}
-		}
+
+	private static Path findAgent() {
+		return configurationLocations().stream() //
+				.map(location -> location.resolve(NVIM_RELATIVE_PATH)) //
+				.filter(Files::isRegularFile) //
+				.filter(Files::isReadable) //
+				.findFirst() //
+				.orElseThrow(() -> new IllegalStateException("Copilot is not installed."));
 	}
-	
+
+	private static List<Path> configurationLocations() {
+		var result = new ArrayList<Path>();
+		String home = System.getProperty("user.home");
+		result.add(Paths.get(home).resolve(".config"));
+		String data = System.getenv("LOCALAPPDATA");
+		if (data != null) {
+			result.add(Paths.get(data));
+		}
+		return result;
+	}
 }
