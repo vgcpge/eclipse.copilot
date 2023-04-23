@@ -1,3 +1,4 @@
-# eclipse.copilot feasibility study
-DOES NOT WORK YET
-Github Copilot intergration with Eclipse
+# Unofficial Github Copilot integration with Eclipse
+
+![Scanner completion](images/scanner_completion.png)
+
