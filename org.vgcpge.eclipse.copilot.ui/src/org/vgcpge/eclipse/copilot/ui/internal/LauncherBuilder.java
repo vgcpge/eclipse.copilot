@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
@@ -158,7 +156,6 @@ public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
 		return (Either<List<CompletionItem>, CompletionList>) input;
 	}
 
-	private static final Pattern INDENT_PATTERN = Pattern.compile("^[ \\t]*");
 	private CompletionItem adaptCompletionItem(JsonElement i) {
 		// {"uuid":"1bc04aaa-70bd-44cb-9f09-0059cb322a6c","text":"\t\tSystem.out.println(\"Hello
 		// World!\");","range":{"start":{"line":5,"character":0},"end":{"line":5,"character":2}},"displayText":"System.out.println(\"Hello
