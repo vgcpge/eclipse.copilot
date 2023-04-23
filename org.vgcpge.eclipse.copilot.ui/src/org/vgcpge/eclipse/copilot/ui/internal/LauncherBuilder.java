@@ -82,12 +82,18 @@ public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
 			if (message instanceof RequestMessage) {
 				message = adaptRequest((RequestMessage) message);
 			} else if (message instanceof NotificationMessage) {
-				message = adaptNotification((NotificationMessage) message);
+				NotificationMessage notification = (NotificationMessage) message;
+				if ("statusNotification".equals(notification.getMethod())) {
+					// LSP4E does not seem to support progress without jobs
+					// It does not make sense to log this, so lets suppress
+					// Convert to window/logMessage or similar if needed later.
+					return;
+				}
+				message = adaptNotification(notification);
 			} else if (message instanceof ResponseMessage) {
 				message = adaptResponse((ResponseMessage) message);
 			}
 			consumer.consume(message);
-
 		};
 	}
 
@@ -100,10 +106,11 @@ public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
 	}
 
 	private NotificationMessage adaptNotification(NotificationMessage notification) {
-		if ("LogMessage".equals(notification.getMethod())) {
+		String method = notification.getMethod();
+		if ("LogMessage".equals(method)) {
 			notification.setMethod("window/logMessage");
 			notification.setParams(adaptMessageParams(notification.getParams()));
-		} else if ("textDocument/didChange".equals(notification.getMethod())) {
+		} else if ("textDocument/didChange".equals(method)) {
 			DidChangeTextDocumentParams params = (DidChangeTextDocumentParams)notification.getParams();
 			// CompletionParams produced by Eclipse do not include document version, so version mismatch happens, is different versions are sent here
 			params.getTextDocument().setVersion(1);
