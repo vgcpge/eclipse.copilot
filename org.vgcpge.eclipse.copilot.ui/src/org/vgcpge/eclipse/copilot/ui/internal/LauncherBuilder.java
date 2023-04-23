@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
@@ -149,6 +151,7 @@ public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
 		return (Either<List<CompletionItem>, CompletionList>) input;
 	}
 
+	private static final Pattern INDENT_PATTERN = Pattern.compile("^[ \\t]*");
 	private CompletionItem adaptCompletionItem(JsonElement i) {
 		// {"uuid":"1bc04aaa-70bd-44cb-9f09-0059cb322a6c","text":"\t\tSystem.out.println(\"Hello
 		// World!\");","range":{"start":{"line":5,"character":0},"end":{"line":5,"character":2}},"displayText":"System.out.println(\"Hello
@@ -158,8 +161,16 @@ public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
 		JsonObject object = i.getAsJsonObject();
 		result.setInsertText(object.get("text").getAsString());
 		result.setLabel(object.get("displayText").getAsString());
-		result.setTextEdit(Either.forLeft(
-				new TextEdit(gson.fromJson(object.get("range"), Range.class), object.get("text").getAsString())));
+		TextEdit textEdit = new TextEdit(gson.fromJson(object.get("range"), Range.class), object.get("text").getAsString());
+		// LSP4E does not like when offset of insertion is not exactly matching the offset of request
+		// Copilot adds indentation before the request offset, so we attempt to remove it, to hopefully make offset exactly match request offset
+		Matcher matcher = INDENT_PATTERN.matcher(textEdit.getNewText());
+		if (matcher.find()) {
+			textEdit.setNewText(textEdit.getNewText().substring(matcher.end()));
+			var start = textEdit.getRange().getStart();
+			start.setCharacter(start.getCharacter() + matcher.end());
+		}
+		result.setTextEdit(Either.forLeft(textEdit));
 		return result;
 	}
 
