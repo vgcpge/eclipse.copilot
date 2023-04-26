@@ -3,6 +3,7 @@ package org.vgcpge.eclipse.copilot.ui.internal;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
 import org.eclipse.core.runtime.IStatus;
@@ -26,6 +27,7 @@ import org.vgcpge.eclipse.copilot.ui.rpc.Status;
 public class LanguageServerDecorator implements CopilotLanguageServer {
 	private final CopilotLanguageServer languageServerDelegate;
 	private static final String BUNDLE_ID = FrameworkUtil.getBundle(LanguageServerDecorator.class).getSymbolicName();
+	private final CompletableFuture<Void> initialized = new CompletableFuture<>();
 
 	public LanguageServerDecorator(CopilotLanguageServer languageServerDelegate) {
 		super();
@@ -35,7 +37,14 @@ public class LanguageServerDecorator implements CopilotLanguageServer {
 	@Override
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
 		CompletableFuture<InitializeResult> result = languageServerDelegate.initialize(params);
-		result.thenRun(() -> {
+		result.whenComplete((ignore, error) -> {
+			if (error != null) {
+				initialized.completeExceptionally(error);
+			} else {
+				initialized.complete(null);
+			}
+		});
+		result.thenRunAsync(() -> {
 			ensureAuthenticated();
 		});
 		return result;
@@ -132,6 +141,10 @@ public class LanguageServerDecorator implements CopilotLanguageServer {
 	@Override
 	public CompletableFuture<SignInConfrimResult> signInConfirm(String userCode) {
 		return languageServerDelegate.signInConfirm(userCode);
+	}
+
+	public CompletionStage<Void> getInitialized() {
+		return initialized;
 	}
 
 }

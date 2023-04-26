@@ -5,7 +5,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
@@ -26,6 +28,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage;
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
+import org.eclipse.lsp4j.services.LanguageClient;
 import org.vgcpge.eclipse.copilot.ui.rpc.CopilotLanguageServer;
 
 import com.google.gson.Gson;
@@ -183,8 +186,30 @@ public class LauncherBuilder extends Launcher.Builder<CopilotLanguageServer> {
 	}
 	
 	@Override
+	protected RemoteEndpoint createRemoteEndpoint(MessageJsonHandler jsonHandler) {
+		setLocalServices(localServices.stream().map(this::wrapLocalService).collect(Collectors.toUnmodifiableList()));
+		return super.createRemoteEndpoint(jsonHandler);
+	}
+	private CompletableFuture<Void> initialized;
+	
+	@Override
 	protected CopilotLanguageServer createProxy(RemoteEndpoint remoteEndpoint) {
-		return new LanguageServerDecorator(super.createProxy(remoteEndpoint));
+		LanguageServerDecorator decorator = new LanguageServerDecorator(super.createProxy(remoteEndpoint));
+		decorator.getInitialized().whenComplete((ignored, error) -> {
+			if (error != null) {
+				initialized.completeExceptionally(error);
+			} else {
+				initialized.complete(null);
+			}
+		});
+		return decorator;
+	}
+
+	private Object wrapLocalService(Object object1) {
+		if (object1 instanceof LanguageClient) {
+			return new CopilotClient((LanguageClient)object1, initialized = new CompletableFuture<>());
+		}
+		return object1;
 	}
 
 }
