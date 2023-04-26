@@ -13,6 +13,7 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.browser.IWebBrowser;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.osgi.framework.FrameworkUtil;
 import org.vgcpge.eclipse.copilot.ui.rpc.CheckStatusOptions;
@@ -33,10 +34,11 @@ public class LanguageServerDecorator implements CopilotLanguageServer {
 
 	@Override
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
-		return languageServerDelegate.initialize(params).thenApply(result -> {
+		CompletableFuture<InitializeResult> result = languageServerDelegate.initialize(params);
+		result.thenRun(() -> {
 			ensureAuthenticated();
-			return result;
 		});
+		return result;
 	}
 
 	private void ensureAuthenticated() {
@@ -66,10 +68,16 @@ public class LanguageServerDecorator implements CopilotLanguageServer {
 		try {
 			var signInInitiateResult = signInInitiate().get();
 			long start = System.currentTimeMillis();
-			var browser = PlatformUI.getWorkbench().getBrowserSupport().createBrowser(0,
-					BUNDLE_ID + ".authenticationRequest", "Copilot Authentication Request",
-					"Enter the code from modal dialog");
-			browser.openURL(new URL(signInInitiateResult.verificationUri));
+			PlatformUI.getWorkbench().getDisplay().syncExec( () -> {
+				try {
+					IWebBrowser browser = PlatformUI.getWorkbench().getBrowserSupport().createBrowser(0,
+							BUNDLE_ID + ".authenticationRequest", "Copilot Authentication Request",
+							"Enter the code from the modal dialog");
+					browser.openURL(new URL(signInInitiateResult.verificationUri));
+				} catch (MalformedURLException | PartInitException e) {
+					throw new IllegalStateException(e);
+				}
+			});
 			IStatus queryUser = org.eclipse.core.runtime.Status
 					.warning("Copilot authentication request: " + signInInitiateResult.userCode);
 			StatusManager.getManager().handle(queryUser, StatusManager.BLOCK | StatusManager.SHOW);
@@ -86,7 +94,7 @@ public class LanguageServerDecorator implements CopilotLanguageServer {
 				}
 			}
 			throw new IllegalStateException("Authenitcaton has timed out");
-		} catch (ExecutionException | PartInitException | MalformedURLException e) {
+		} catch (ExecutionException e) {
 			throw new IllegalStateException(e);
 		}
 	}
