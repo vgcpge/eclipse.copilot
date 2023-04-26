@@ -19,19 +19,20 @@ import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.Launcher.Builder;
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
+import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint;
 import org.eclipse.lsp4j.jsonrpc.json.JsonRpcMethod;
 import org.eclipse.lsp4j.jsonrpc.json.MessageJsonHandler;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage;
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage;
-import org.eclipse.lsp4j.services.LanguageServer;
+import org.vgcpge.eclipse.copilot.ui.rpc.CopilotLanguageServer;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
+public class LauncherBuilder extends Launcher.Builder<CopilotLanguageServer> {
 	private final Map<String, Function<Object, Object>> responseHooks = Collections.synchronizedMap(new HashMap<>());
 	private MessageJsonHandler jsonHandler;
 
@@ -51,7 +52,7 @@ public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
 		return result;
 	}
 
-	public Builder<LanguageServer> wrapMessages(Function<MessageConsumer, MessageConsumer> wrapper) {
+	public Builder<CopilotLanguageServer> wrapMessages(Function<MessageConsumer, MessageConsumer> wrapper) {
 		var original = this.messageWrapper;
 		if (original != null) {
 			this.messageWrapper = original.andThen(wrapper);
@@ -64,7 +65,7 @@ public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
 	private JsonRpcMethod hookInitialize(String methodName, JsonRpcMethod original) {
 		assert "initialize".equals(methodName);
 		assert methodName.equals(original.getMethodName());
-		// Copilot does not use standard completion protocol, so it does not declare to be compatible with it
+		// Copilot does not use the LSP completion protocol, so it does not declare to be compatible with it
 		// LSP4E completions would not work with non-compatible servers, so we imitate completion capability by changing defaults for server response
 		return JsonRpcMethod.request(original.getMethodName(), CopilotInitializeResult.class,
 				original.getParameterTypes());
@@ -179,6 +180,11 @@ public class LauncherBuilder extends Launcher.Builder<LanguageServer> {
 			return message;
 		}
 		return message.substring(0, position);
+	}
+	
+	@Override
+	protected CopilotLanguageServer createProxy(RemoteEndpoint remoteEndpoint) {
+		return new LanguageServerDecorator(super.createProxy(remoteEndpoint));
 	}
 
 }

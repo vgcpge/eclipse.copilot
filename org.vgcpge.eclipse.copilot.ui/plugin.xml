@@ -7,7 +7,8 @@
             class="org.vgcpge.eclipse.copilot.ui.internal.GithubCopilotProvider"
             id="org.vgcpge.eclipse.copilot.ui.copilot"
             label="Github Copilot"
-            launcherBuilder="org.vgcpge.eclipse.copilot.ui.internal.LauncherBuilder">
+            launcherBuilder="org.vgcpge.eclipse.copilot.ui.internal.LauncherBuilder"
+            serverInterface="org.vgcpge.eclipse.copilot.ui.rpc.CopilotLanguageServer">
       </server>
       <contentTypeMapping
             contentType="org.eclipse.jdt.core.javaSource"
