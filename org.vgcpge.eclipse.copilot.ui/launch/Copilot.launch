@@ -28,7 +28,7 @@
     <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dorg.eclipse.swt.graphics.Resource.reportNonDisposed=true"/>
     <booleanAttribute key="pde.generated.config" value="false"/>
     <stringAttribute key="pde.version" value="3.3"/>
-    <stringAttribute key="product" value="org.eclipse.sdk.ide"/>
+    <stringAttribute key="product" value="org.eclipse.platform.ide"/>
     <setAttribute key="selected_features">
         <setEntry value="org.eclipse.jdt:default"/>
         <setEntry value="org.eclipse.platform:default"/>

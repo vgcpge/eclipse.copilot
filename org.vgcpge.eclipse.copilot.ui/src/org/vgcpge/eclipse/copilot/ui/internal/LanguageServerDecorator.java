@@ -120,7 +120,7 @@ public class LanguageServerDecorator implements CopilotLanguageServer {
 
 	@Override
 	public TextDocumentService getTextDocumentService() {
-		return languageServerDelegate.getTextDocumentService();
+		return new TextDocumentServiceDecorator(languageServerDelegate.getTextDocumentService());
 	}
 
 	@Override
