@@ -6,7 +6,7 @@
 This integration is an unofficial prototype. Consider trying Copilot with [officially supported tools](https://docs.github.com/en/copilot/getting-started-with-github-copilot).
 
 # Usage
-- Download an archive with update site.
+- Download [an archive with an update site](https://github.com/vgcpge/eclipse.copilot/releases/latest/download/update-site.zip).
 - Follow [instructions](https://help.eclipse.org/latest/topic/org.eclipse.platform.doc.user/tasks/tasks-124.htm) to install the Copilot feature from the update site.
 - A warning dialog "Trust" will request a confirmation to install unsigned content. Install on your own risk and consider gifting me a code-signing certificate.
 - Find out what web browser you are using by default in Preferences/General/Web Browser
