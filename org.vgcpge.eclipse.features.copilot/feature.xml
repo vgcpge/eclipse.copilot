@@ -5,8 +5,8 @@
       version="0.0.7.qualifier"
       provider-name="VGCPGE">
 
-   <description url="http://www.example.com/description">
-      [Enter Feature Description here.]
+   <description url="https://github.com/vgcpge/eclipse.copilot">
+      Unofficial Github Copilot integration. An extension for Language Server Protocol for Eclipse (LSP4E).
    </description>
 
    <copyright url="http://www.example.com/copyright">
