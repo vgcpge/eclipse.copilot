@@ -167,7 +167,8 @@ public class LauncherBuilder extends Launcher.Builder<CopilotLanguageServer> {
 		String text = object.get("text").getAsString();
 		String displayText = object.get("displayText").getAsString();
 		result.setLabel(firstLine(displayText));
-		result.setDetail(displayText);
+		String html = "<pre>"+text.replace("\t", "  ")+"</pre>";
+		result.setDetail(html);
 		// Fixes #2. If filter is set, offset computation is based on substrings, producing stable results.
 		// See org.eclipse.lsp4e.operations.completion.LSCompletionProposal.validate(IDocument, int, DocumentEvent)
 		result.setFilterText(text); 
