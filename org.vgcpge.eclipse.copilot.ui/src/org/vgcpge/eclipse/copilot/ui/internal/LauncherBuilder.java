@@ -195,7 +195,7 @@ public class LauncherBuilder extends Launcher.Builder<CopilotLanguageServer> {
 	
 	@Override
 	protected CopilotLanguageServer createProxy(RemoteEndpoint remoteEndpoint) {
-		LanguageServerDecorator decorator = new LanguageServerDecorator(super.createProxy(remoteEndpoint));
+		LanguageServerDecorator decorator = new LanguageServerDecorator(super.createProxy(remoteEndpoint), executorService);
 		decorator.getInitialized().whenComplete((ignored, error) -> {
 			if (error != null) {
 				initialized.completeExceptionally(error);

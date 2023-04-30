@@ -2,9 +2,11 @@ package org.vgcpge.eclipse.copilot.ui.internal;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -24,19 +26,21 @@ import org.vgcpge.eclipse.copilot.ui.rpc.SignInConfrimResult;
 import org.vgcpge.eclipse.copilot.ui.rpc.SignInInitiateResult;
 import org.vgcpge.eclipse.copilot.ui.rpc.Status;
 
-public class LanguageServerDecorator implements CopilotLanguageServer {
+public class LanguageServerDecorator extends DelegatingLanguageServer implements CopilotLanguageServer {
 	private final CopilotLanguageServer languageServerDelegate;
 	private static final String BUNDLE_ID = FrameworkUtil.getBundle(LanguageServerDecorator.class).getSymbolicName();
 	private final CompletableFuture<Void> initialized = new CompletableFuture<>();
+	private Executor executor;
 
-	public LanguageServerDecorator(CopilotLanguageServer languageServerDelegate) {
-		super();
-		this.languageServerDelegate = languageServerDelegate;
+	public LanguageServerDecorator(CopilotLanguageServer languageServerDelegate, Executor executor) {
+		super(languageServerDelegate);
+		this.languageServerDelegate = Objects.requireNonNull(languageServerDelegate);
+		this.executor = Objects.requireNonNull(executor);
 	}
 
 	@Override
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
-		CompletableFuture<InitializeResult> result = languageServerDelegate.initialize(params);
+		CompletableFuture<InitializeResult> result = super.initialize(params);
 		result.whenComplete((ignore, error) -> {
 			if (error != null) {
 				initialized.completeExceptionally(error);
@@ -46,7 +50,7 @@ public class LanguageServerDecorator implements CopilotLanguageServer {
 		});
 		result.thenRunAsync(() -> {
 			ensureAuthenticated();
-		});
+		}, executor);
 		return result;
 	}
 
@@ -110,22 +114,22 @@ public class LanguageServerDecorator implements CopilotLanguageServer {
 
 	@Override
 	public CompletableFuture<Object> shutdown() {
-		return languageServerDelegate.shutdown();
+		return super.shutdown();
 	}
 
 	@Override
 	public void exit() {
-		languageServerDelegate.exit();
+		super.exit();
 	}
 
 	@Override
 	public TextDocumentService getTextDocumentService() {
-		return new TextDocumentServiceDecorator(languageServerDelegate.getTextDocumentService());
+		return new TextDocumentServiceDecorator(super.getTextDocumentService());
 	}
 
 	@Override
 	public WorkspaceService getWorkspaceService() {
-		return languageServerDelegate.getWorkspaceService();
+		return super.getWorkspaceService();
 	}
 
 	@Override
