@@ -8,6 +8,7 @@ Copilot is a cloud-based service provided by Github and only works with [a paid 
 
 # Usage
 - Install [Copilot for Neovim](https://docs.github.com/en/copilot/getting-started-with-github-copilot?tool=neovim) (no need for Neovim itself)
+- Install Node.js and add it to PATH environment variable system-wide 
 - Download [an archive with an update site](https://github.com/vgcpge/eclipse.copilot/releases/latest/download/update-site.zip).
 - Follow [instructions](https://help.eclipse.org/latest/topic/org.eclipse.platform.doc.user/tasks/tasks-124.htm) to install the Copilot feature from the update site.
 - A warning dialog "Trust" will request a confirmation to install unsigned content. Install on your own risk and consider gifting me a code-signing certificate.
@@ -20,3 +21,7 @@ Copilot is a cloud-based service provided by Github and only works with [a paid 
 # Java
 To work with Java Development Tools (JDT), install additionally "JDT Integration for LSP4E" from the main Eclipse update site.
 You may want to remove less useful completion assistants from Preferences/Java/Editor/Content Assist/Advanced. Leave "Language Server Protocols" enabled.
+
+# MacOS
+There is no convenient way to configure environment variables for GUI apps on MacOS. For this reason the plugin looks for Node.js executable in /opt/homebrew/bin/node.
+If your Node.js is installed elsewhere, run Eclipse from terminal with PATH preconfigured.
