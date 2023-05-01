@@ -13,11 +13,12 @@ import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 import org.vgcpge.copilot.ls.rpc.CopilotLanguageServer;
 
-public class DelegatingLanguageServer implements LanguageServer {
+/** Delegate all invocations to the wrapped object without any changes. **/
+public class LanguageServerDecoratorBase implements LanguageServer {
 	private final CompletableFuture<CopilotLanguageServer> delegate;
 	private final DelegatingWorkspaceService workspaceService;
 
-	public DelegatingLanguageServer(CompletableFuture<CopilotLanguageServer> downstreamServer) {
+	public LanguageServerDecoratorBase(CompletableFuture<CopilotLanguageServer> downstreamServer) {
 		this.delegate = Objects.requireNonNull(downstreamServer);
 		this.workspaceService = new DelegatingWorkspaceService(downstreamServer.thenApply(LanguageServer::getWorkspaceService));
 	}
@@ -39,7 +40,7 @@ public class DelegatingLanguageServer implements LanguageServer {
 
 	@Override
 	public TextDocumentService getTextDocumentService() {
-		return new DelegatingTextDocumentService(delegate.thenApply(LanguageServer::getTextDocumentService));
+		return new TextDocumentServiceDecoratorBase(delegate.thenApply(LanguageServer::getTextDocumentService));
 	}
 
 	@Override

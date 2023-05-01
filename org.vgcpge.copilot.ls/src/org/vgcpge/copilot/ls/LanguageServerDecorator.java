@@ -19,7 +19,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.vgcpge.copilot.ls.rpc.CopilotLanguageServer;
 
-public class LanguageServerDecorator extends DelegatingLanguageServer {
+public class LanguageServerDecorator extends LanguageServerDecoratorBase {
 	private final CompletableFuture<CopilotLanguageServer> languageServerDelegate;
 	private final CompletableFuture<CopilotLanguageServer> initialized = new CompletableFuture<>();
 	private Supplier<CopilotLanguageServer> startCopilot;
@@ -73,7 +73,7 @@ public class LanguageServerDecorator extends DelegatingLanguageServer {
 
 	@Override
 	public TextDocumentService getTextDocumentService() {
-		return new DelegatingTextDocumentService(languageServerDelegate.thenApply(CopilotLanguageServer::getTextDocumentService)) {
+		return new TextDocumentServiceDecoratorBase(languageServerDelegate.thenApply(CopilotLanguageServer::getTextDocumentService)) {
 			@Override
 			public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(
 					CompletionParams position) {

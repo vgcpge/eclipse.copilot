@@ -14,11 +14,11 @@ import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
 
-public class DelegatingTextDocumentService implements TextDocumentService {
+public class TextDocumentServiceDecoratorBase implements TextDocumentService {
 
 	private final CompletableFuture<TextDocumentService> delegate;
 
-	public DelegatingTextDocumentService(CompletableFuture<TextDocumentService> delegate) {
+	public TextDocumentServiceDecoratorBase(CompletableFuture<TextDocumentService> delegate) {
 		this.delegate = Objects.requireNonNull(delegate);
 	}
 
