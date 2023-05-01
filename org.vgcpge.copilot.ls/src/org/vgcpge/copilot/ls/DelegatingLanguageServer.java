@@ -9,16 +9,17 @@ import org.eclipse.lsp4j.InitializedParams;
 import org.eclipse.lsp4j.SetTraceParams;
 import org.eclipse.lsp4j.WorkDoneProgressCancelParams;
 import org.eclipse.lsp4j.services.LanguageServer;
-import org.eclipse.lsp4j.services.NotebookDocumentService;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
 import org.vgcpge.copilot.ls.rpc.CopilotLanguageServer;
 
 public class DelegatingLanguageServer implements LanguageServer {
 	private final CompletableFuture<CopilotLanguageServer> delegate;
+	private final DelegatingWorkspaceService workspaceService;
 
 	public DelegatingLanguageServer(CompletableFuture<CopilotLanguageServer> downstreamServer) {
 		this.delegate = Objects.requireNonNull(downstreamServer);
+		this.workspaceService = new DelegatingWorkspaceService(downstreamServer.thenApply(LanguageServer::getWorkspaceService));
 	}
 
 	@Override
@@ -38,18 +39,12 @@ public class DelegatingLanguageServer implements LanguageServer {
 
 	@Override
 	public TextDocumentService getTextDocumentService() {
-		// TODO: come up with a fix for NPE
-		return delegate.getNow(null).getTextDocumentService();
+		return new DelegatingTextDocumentService(delegate.thenApply(LanguageServer::getTextDocumentService));
 	}
 
 	@Override
 	public WorkspaceService getWorkspaceService() {
-		return delegate.getNow(null).getWorkspaceService();
-	}
-
-	@Override
-	public NotebookDocumentService getNotebookDocumentService() {
-		return delegate.getNow(null).getNotebookDocumentService();
+		return workspaceService;
 	}
 
 	@Override

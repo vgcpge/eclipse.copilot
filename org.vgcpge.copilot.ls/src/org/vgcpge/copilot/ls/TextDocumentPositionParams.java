@@ -11,6 +11,7 @@ import org.eclipse.lsp4j.jsonrpc.validation.NonNull;
  * 4, "uri": "file:///private/tmp/python_debugg/testing_python.py", "version": 0
  * } 
  */
+@SuppressWarnings("unused") // fields are used by GSON
 public class TextDocumentPositionParams extends org.eclipse.lsp4j.VersionedTextDocumentIdentifier {
 
 	/**
@@ -18,15 +19,13 @@ public class TextDocumentPositionParams extends org.eclipse.lsp4j.VersionedTextD
 	 */
 	@NonNull
 	private Position position;
-	private boolean insertSpaces = true;
+	private boolean insertSpaces = false;
 
 	private int tabSize = 4;
 
-	public TextDocumentPositionParams(String uri, Position position, int version, boolean insertSpaces) {
+	public TextDocumentPositionParams(String uri, Position position, int version) {
 		super(uri,  version);
 		this.position = Objects.requireNonNull(position);
-		this.insertSpaces = insertSpaces;
-		this.tabSize = tabSize;
 	}
 
 }

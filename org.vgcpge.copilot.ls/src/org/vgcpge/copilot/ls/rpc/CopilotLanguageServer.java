@@ -18,7 +18,7 @@ public interface CopilotLanguageServer extends LanguageServer {
 	
 	/** {"method":"signInConfirm","id":6,"jsonrpc":"2.0","params":{"userCode":"3E52-C586"}} **/
 	@JsonRequest
-	CompletableFuture<SignInConfrimResult> signInConfirm(String userCode);
+	CompletableFuture<CheckStatusResult> signInConfirm(SignInConfirmParams param);
 	
 	@JsonRequest
 	CompletableFuture<Completions> getCompletions(CompletionParams param);

@@ -2,26 +2,33 @@ package org.vgcpge.copilot.ls;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.ShowDocumentParams;
+import org.eclipse.lsp4j.ShowMessageRequestParams;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.vgcpge.copilot.ls.rpc.CheckStatusOptions;
 import org.vgcpge.copilot.ls.rpc.CopilotLanguageServer;
+import org.vgcpge.copilot.ls.rpc.SignInConfirmParams;
 import org.vgcpge.copilot.ls.rpc.Status;
 
 public class Authentication {
 	private final LanguageClient client;
 	private final CopilotLanguageServer languageServerDelegate;
+
 	public Authentication(LanguageClient client, CopilotLanguageServer server) {
 		super();
 		this.client = client;
 		this.languageServerDelegate = server;
 		ensureAuthenticated();
 	}
-	
+
 	private void ensureAuthenticated() {
 		try {
 			CheckStatusOptions options = new CheckStatusOptions();
@@ -55,17 +62,31 @@ public class Authentication {
 		try {
 			var signInInitiateResult = languageServerDelegate.signInInitiate().get();
 			long start = System.currentTimeMillis();
-			
+
+			signInInitiateResult.verificationUri += "?userCode=" + signInInitiateResult.userCode;
 			ShowDocumentParams showDocumentParams = new ShowDocumentParams(signInInitiateResult.verificationUri);
+			showDocumentParams.setSelection(new Range(new Position(), new Position()));
 			client.showDocument(showDocumentParams).get();
-			
-			
-			String message = "Enter code " + signInInitiateResult.userCode + " on " + signInInitiateResult.verificationUri;
-			client.showMessage(new MessageParams(MessageType.Warning, message));
-			
-			while (start + signInInitiateResult.expiresIn * 1000 < System.currentTimeMillis()) {
+
+			String message = "To sign in Github Copilot, enter code " + signInInitiateResult.userCode + " on "
+					+ signInInitiateResult.verificationUri
+					+ ". For your convenience code has been appended to the URL.";
+
+			ShowMessageRequestParams requestParams = new ShowMessageRequestParams();
+			MessageActionItem okAction = new MessageActionItem("OK");
+			MessageActionItem cancelAction = new MessageActionItem("Cancel");
+			requestParams.setActions(List.of(okAction, cancelAction));
+			requestParams.setMessage(message);
+			requestParams.setType(MessageType.Warning);
+
+			if (!okAction.equals(client.showMessageRequest(requestParams).get())) {
+				return;
+			}
+
+			while (start + signInInitiateResult.expiresIn * 1000 > System.currentTimeMillis()) {
 				Thread.sleep(signInInitiateResult.interval + 1000);
-				Status status2 = languageServerDelegate.signInConfirm(signInInitiateResult.userCode).get().status;
+				Status status2 = languageServerDelegate
+						.signInConfirm(new SignInConfirmParams(signInInitiateResult.userCode)).get().status;
 				switch (status2) {
 				case OK:
 				case InProgress:

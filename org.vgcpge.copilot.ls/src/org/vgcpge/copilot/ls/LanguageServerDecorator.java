@@ -3,6 +3,7 @@ package org.vgcpge.copilot.ls;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.eclipse.lsp4j.CompletionItem;
@@ -16,20 +17,30 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.TextDocumentService;
-import org.eclipse.lsp4j.services.WorkspaceService;
 import org.vgcpge.copilot.ls.rpc.CopilotLanguageServer;
 
 public class LanguageServerDecorator extends DelegatingLanguageServer {
 	private final CompletableFuture<CopilotLanguageServer> languageServerDelegate;
-	private final CompletableFuture<Void> initialized = new CompletableFuture<>();
+	private final CompletableFuture<CopilotLanguageServer> initialized = new CompletableFuture<>();
+	private Supplier<CopilotLanguageServer> startCopilot;
+
+	public LanguageServerDecorator(Supplier<CopilotLanguageServer> startCopilot) {
+		this(new CompletableFuture<>(), startCopilot);
+	}
 	
-	public LanguageServerDecorator(CompletableFuture<CopilotLanguageServer> downstreamServer) {
-		super(downstreamServer);
-		this.languageServerDelegate = Objects.requireNonNull(downstreamServer);
+	private LanguageServerDecorator(CompletableFuture<CopilotLanguageServer> languageServerDelegate, Supplier<CopilotLanguageServer> startCopilot) {
+		super(languageServerDelegate);
+		this.languageServerDelegate = Objects.requireNonNull(languageServerDelegate);
+		this.startCopilot = Objects.requireNonNull(startCopilot);
 	}
 
 	@Override
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
+		try {
+			languageServerDelegate.complete(startCopilot.get());
+		} catch (Exception e) {
+			languageServerDelegate.completeExceptionally(e);
+		}
 		CompletableFuture<InitializeResult> result = super.initialize(params).thenApply(result2 -> {
 			CompletionOptions completionProvider = result2.getCapabilities().getCompletionProvider();
 			if (completionProvider == null) {
@@ -44,13 +55,11 @@ public class LanguageServerDecorator extends DelegatingLanguageServer {
 			if (error != null) {
 				initialized.completeExceptionally(error);
 			} else {
-				initialized.complete(null);
+				initialized.complete(languageServerDelegate.getNow(null));
 			}
 		});
 		return result;
 	}
-
-
 
 	@Override
 	public CompletableFuture<Object> shutdown() {
@@ -64,15 +73,15 @@ public class LanguageServerDecorator extends DelegatingLanguageServer {
 
 	@Override
 	public TextDocumentService getTextDocumentService() {
-		return new TextDocumentServiceDecorator(super.getTextDocumentService()) {
+		return new DelegatingTextDocumentService(languageServerDelegate.thenApply(CopilotLanguageServer::getTextDocumentService)) {
 			@Override
 			public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(
 					CompletionParams position) {
 				return languageServerDelegate.thenCompose(s -> s.getCompletions(adaptCompletionParams(position)))
-						.thenApply(c -> Either.forLeft(c.completions.stream().map(LanguageServerDecorator::adaptCompletoinItem)
-								.collect(Collectors.toList())));
+						.thenApply(c -> Either.forLeft(c.completions.stream()
+								.map(LanguageServerDecorator::adaptCompletoinItem).collect(Collectors.toList())));
 			}
-			
+
 			@Override
 			public void didChange(DidChangeTextDocumentParams params) {
 				params.getTextDocument().setVersion(1);
@@ -82,18 +91,13 @@ public class LanguageServerDecorator extends DelegatingLanguageServer {
 		};
 	}
 
-	@Override
-	public WorkspaceService getWorkspaceService() {
-		return super.getWorkspaceService();
-	}
-
-	public CompletableFuture<Void> getInitialized() {
+	public CompletableFuture<CopilotLanguageServer> getInitialized() {
 		return initialized;
 	}
 
 	private static org.vgcpge.copilot.ls.CompletionParams adaptCompletionParams(CompletionParams params) {
 		TextDocumentIdentifier doc = params.getTextDocument();
-		TextDocumentPositionParams docPos = new TextDocumentPositionParams(doc.getUri(), params.getPosition(), 1, false);
+		TextDocumentPositionParams docPos = new TextDocumentPositionParams(doc.getUri(), params.getPosition(), 1);
 		return new org.vgcpge.copilot.ls.CompletionParams(docPos);
 	}
 
@@ -101,16 +105,19 @@ public class LanguageServerDecorator extends DelegatingLanguageServer {
 		String text = completion.text;
 		String displayText = completion.displayText;
 		CompletionItem result = new CompletionItem(firstLine(displayText));
-		String html = "<pre>"+text.replace("\t", "  ")+"</pre>";
+		String html = "<pre>" + text.replace("\t", "  ") + "</pre>";
 		result.setDetail(html);
-		// Fixes #2. If filter is set, offset computation is based on substrings, producing stable results.
-		// See org.eclipse.lsp4e.operations.completion.LSCompletionProposal.validate(IDocument, int, DocumentEvent)
-		result.setFilterText(text); 
+		// Fixes #2. If filter is set, offset computation is based on substrings,
+		// producing stable results.
+		// See
+		// org.eclipse.lsp4e.operations.completion.LSCompletionProposal.validate(IDocument,
+		// int, DocumentEvent)
+		result.setFilterText(text);
 		TextEdit textEdit = new TextEdit(completion.range, text);
 		result.setTextEdit(Either.forLeft(textEdit));
 		return result;
 	}
-	
+
 	private static String firstLine(String message) {
 		message = message.strip();
 		int position = message.indexOf('\n');

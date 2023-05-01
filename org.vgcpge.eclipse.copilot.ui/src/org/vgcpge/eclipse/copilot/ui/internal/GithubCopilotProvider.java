@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.lsp4e.server.StreamConnectionProvider;
+import org.vgcpge.copilot.ls.LanguageServer;
 
 import com.google.common.io.Closer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -28,9 +29,9 @@ public final class GithubCopilotProvider implements StreamConnectionProvider {
 
 	@Override
 	public void start() throws IOException {
-		org.vgcpge.copilot.ls.Main.startProxy(closer.register(new OrphanPipedInputStream(output)),
+		closer.register(new LanguageServer(closer.register(new OrphanPipedInputStream(output)),
 				closer.register(new PipedOutputStream(input)), closer.register(new PipedOutputStream(error)),
-				executorService);
+				executorService));
 		closer.register(output);
 	}
 
