@@ -1,4 +1,4 @@
-package org.vgcpge.eclipse.copilot.ui.internal;
+package org.vgcpge.copilot.ls;
 
 import java.util.Objects;
 

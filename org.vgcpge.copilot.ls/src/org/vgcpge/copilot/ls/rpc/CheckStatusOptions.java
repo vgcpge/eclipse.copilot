@@ -1,4 +1,4 @@
-package org.vgcpge.eclipse.copilot.ui.rpc;
+package org.vgcpge.copilot.ls.rpc;
 
 public class CheckStatusOptions {
 	public boolean localChecksOnly = true;

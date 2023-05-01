@@ -1,4 +1,4 @@
-package org.vgcpge.eclipse.copilot.ui.rpc;
+package org.vgcpge.copilot.ls.rpc;
 
 import org.eclipse.lsp4j.jsonrpc.validation.NonNull;
 

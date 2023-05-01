@@ -1,4 +1,4 @@
-package org.vgcpge.eclipse.copilot.ui.internal;
+package org.vgcpge.copilot.ls;
 
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.DidChangeWatchedFilesParams;

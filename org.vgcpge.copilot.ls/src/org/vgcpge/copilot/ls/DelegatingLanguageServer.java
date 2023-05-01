@@ -1,4 +1,4 @@
-package org.vgcpge.eclipse.copilot.ui.internal;
+package org.vgcpge.copilot.ls;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -12,58 +12,59 @@ import org.eclipse.lsp4j.services.LanguageServer;
 import org.eclipse.lsp4j.services.NotebookDocumentService;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.eclipse.lsp4j.services.WorkspaceService;
-import org.vgcpge.eclipse.copilot.ui.rpc.CopilotLanguageServer;
+import org.vgcpge.copilot.ls.rpc.CopilotLanguageServer;
 
 public class DelegatingLanguageServer implements LanguageServer {
-	private final CopilotLanguageServer delegate;
+	private final CompletableFuture<CopilotLanguageServer> delegate;
 
-	public DelegatingLanguageServer(CopilotLanguageServer languageServerDelegate) {
-		this.delegate = Objects.requireNonNull(languageServerDelegate);
+	public DelegatingLanguageServer(CompletableFuture<CopilotLanguageServer> downstreamServer) {
+		this.delegate = Objects.requireNonNull(downstreamServer);
 	}
 
 	@Override
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
-		return delegate.initialize(params);
+		return delegate.thenCompose(d -> d.initialize(params));
 	}
 
 	@Override
 	public CompletableFuture<Object> shutdown() {
-		return delegate.shutdown();
+		return delegate.thenCompose(d -> d.shutdown());
 	}
 
 	@Override
 	public void exit() {
-		delegate.exit();
+		delegate.thenAccept(d -> d.exit());
 	}
 
 	@Override
 	public TextDocumentService getTextDocumentService() {
-		return delegate.getTextDocumentService();
+		// TODO: come up with a fix for NPE
+		return delegate.getNow(null).getTextDocumentService();
 	}
 
 	@Override
 	public WorkspaceService getWorkspaceService() {
-		return delegate.getWorkspaceService();
-	}
-
-	@Override
-	public void initialized(InitializedParams params) {
-		delegate.initialized(params);
+		return delegate.getNow(null).getWorkspaceService();
 	}
 
 	@Override
 	public NotebookDocumentService getNotebookDocumentService() {
-		return delegate.getNotebookDocumentService();
+		return delegate.getNow(null).getNotebookDocumentService();
+	}
+
+	@Override
+	public void initialized(InitializedParams params) {
+		delegate.thenAccept(d -> d.initialized(params));
 	}
 
 	@Override
 	public void cancelProgress(WorkDoneProgressCancelParams params) {
-		delegate.cancelProgress(params);
+		delegate.thenAccept(d -> d.cancelProgress(params));
 	}
 
 	@Override
 	public void setTrace(SetTraceParams params) {
-		delegate.setTrace(params);
+		delegate.thenAccept(d -> d.setTrace(params));
 	}
 
 }

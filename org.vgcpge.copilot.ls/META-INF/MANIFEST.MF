@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Language Server for Github Copilot
+Bundle-SymbolicName: org.vgcpge.copilot.ls
+Bundle-Version: 0.0.8.qualifier
+Export-Package: org.vgcpge.copilot.ls
+Require-Bundle: org.eclipse.lsp4j.jsonrpc,
+ org.eclipse.lsp4j,
+ com.google.gson;bundle-version="2.9.1"
+Automatic-Module-Name: org.vgcpge.copilot.ls
+Bundle-RequiredExecutionEnvironment: JavaSE-17

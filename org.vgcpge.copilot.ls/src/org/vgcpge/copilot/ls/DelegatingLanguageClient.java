@@ -1,9 +1,8 @@
-package org.vgcpge.eclipse.copilot.ui.internal;
+package org.vgcpge.copilot.ls;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
 import org.eclipse.lsp4j.ApplyWorkspaceEditParams;
 import org.eclipse.lsp4j.ApplyWorkspaceEditResponse;
@@ -22,111 +21,109 @@ import org.eclipse.lsp4j.WorkDoneProgressCreateParams;
 import org.eclipse.lsp4j.WorkspaceFolder;
 import org.eclipse.lsp4j.services.LanguageClient;
 
-public class CopilotClient implements LanguageClient {
-	private final LanguageClient delegate;
-	private final CompletionStage<Void> initialized;
+public class DelegatingLanguageClient implements LanguageClient {
+	private final CompletableFuture<LanguageClient> delegate;
 
-	public CopilotClient(LanguageClient delegate, CompletionStage<Void> initialized) {
+	public DelegatingLanguageClient(CompletableFuture<LanguageClient> delegate) {
 		this.delegate = Objects.requireNonNull(delegate);
-		this.initialized = initialized;
 	}
 
 	@Override
 	public void telemetryEvent(Object object) {
-		delegate.telemetryEvent(object);
+		delegate.thenAccept(d -> d.telemetryEvent(object));
 	}
 
 	@Override
 	public void publishDiagnostics(PublishDiagnosticsParams diagnostics) {
-		delegate.publishDiagnostics(diagnostics);
+		delegate.thenAccept(d -> d.publishDiagnostics(diagnostics));
 
 	}
 
 	@Override
 	public void showMessage(MessageParams messageParams) {
-		delegate.showMessage(messageParams);
+		delegate.thenAccept(d -> d.showMessage(messageParams));
 
 	}
 
 	@Override
 	public CompletableFuture<MessageActionItem> showMessageRequest(ShowMessageRequestParams requestParams) {
-		return delegate.showMessageRequest(requestParams);
+		return delegate.thenCompose(d -> d.showMessageRequest(requestParams));
 	}
 
 	@Override
 	public void logMessage(MessageParams message) {
-		delegate.logMessage(message);
+		delegate.thenAccept(d -> d.logMessage(message));
 
 	}
 
 	@Override
 	public CompletableFuture<ApplyWorkspaceEditResponse> applyEdit(ApplyWorkspaceEditParams params) {
-		return delegate.applyEdit(params);
+		return delegate.thenCompose(d -> d.applyEdit(params));
 	}
 
 	@Override
 	public CompletableFuture<Void> registerCapability(RegistrationParams params) {
-		return initialized.thenRun(() -> delegate.registerCapability(params)).toCompletableFuture();
+		return delegate.thenCompose(d -> d.registerCapability(params));
 	}
 
 	@Override
 	public CompletableFuture<Void> unregisterCapability(UnregistrationParams params) {
-		return delegate.unregisterCapability(params);
+		return delegate.thenAccept(d -> d.unregisterCapability(params));
 	}
 
 	@Override
 	public CompletableFuture<ShowDocumentResult> showDocument(ShowDocumentParams params) {
-		return delegate.showDocument(params);
+		return delegate.thenCompose(d -> d.showDocument(params));
 	}
 
 	@Override
 	public CompletableFuture<List<WorkspaceFolder>> workspaceFolders() {
-		return delegate.workspaceFolders();
+		return delegate.thenCompose(d -> d.workspaceFolders());
 	}
 
 	@Override
 	public CompletableFuture<List<Object>> configuration(ConfigurationParams configurationParams) {
-		return delegate.configuration(configurationParams);
+		return delegate.thenCompose(d -> d.configuration(configurationParams));
 	}
 
 	@Override
 	public CompletableFuture<Void> createProgress(WorkDoneProgressCreateParams params) {
-		return delegate.createProgress(params);
+		return delegate.thenCompose(d -> d.createProgress(params));
 	}
 
 	@Override
 	public void notifyProgress(ProgressParams params) {
-		delegate.notifyProgress(params);
+		delegate.thenAccept(d -> d.notifyProgress(params));
 	}
 
 	@Override
 	public void logTrace(LogTraceParams params) {
-		delegate.logTrace(params);
+		delegate.thenAccept(d -> d.logTrace(params));
 	}
 
 	@Override
 	public CompletableFuture<Void> refreshSemanticTokens() {
-		return delegate.refreshSemanticTokens();
+		return delegate.thenCompose(d -> d.refreshSemanticTokens());
 	}
 
 	@Override
 	public CompletableFuture<Void> refreshCodeLenses() {
-		return delegate.refreshCodeLenses();
+		return delegate.thenCompose(d -> d.refreshCodeLenses());
 	}
 
 	@Override
 	public CompletableFuture<Void> refreshInlayHints() {
-		return delegate.refreshInlayHints();
+		return delegate.thenCompose(d -> d.refreshInlayHints());
 	}
 
 	@Override
 	public CompletableFuture<Void> refreshInlineValues() {
-		return delegate.refreshInlineValues();
+		return delegate.thenCompose(d -> d.refreshInlineValues());
 	}
 
 	@Override
 	public CompletableFuture<Void> refreshDiagnostics() {
-		return delegate.refreshDiagnostics();
+		return delegate.thenCompose(d -> d.refreshDiagnostics());
 	}
 
 }

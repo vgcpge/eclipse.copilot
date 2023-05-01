@@ -1,9 +1,10 @@
-package org.vgcpge.eclipse.copilot.ui.rpc;
+package org.vgcpge.copilot.ls.rpc;
 
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageServer;
+import org.vgcpge.copilot.ls.CompletionParams;
 
 public interface CopilotLanguageServer extends LanguageServer {
 	
@@ -18,4 +19,7 @@ public interface CopilotLanguageServer extends LanguageServer {
 	/** {"method":"signInConfirm","id":6,"jsonrpc":"2.0","params":{"userCode":"3E52-C586"}} **/
 	@JsonRequest
 	CompletableFuture<SignInConfrimResult> signInConfirm(String userCode);
+	
+	@JsonRequest
+	CompletableFuture<Completions> getCompletions(CompletionParams param);
 }

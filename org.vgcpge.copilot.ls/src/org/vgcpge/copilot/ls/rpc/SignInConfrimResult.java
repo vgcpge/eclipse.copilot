@@ -1,4 +1,4 @@
-package org.vgcpge.eclipse.copilot.ui.rpc;
+package org.vgcpge.copilot.ls.rpc;
 
 /** {"jsonrpc":"2.0","id":6,"result":{"status":"OK","user":"vgcpge"}} **/
 public class SignInConfrimResult extends CheckStatusResult {
