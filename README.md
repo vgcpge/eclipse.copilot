@@ -25,3 +25,7 @@ You may want to remove less useful completion assistants from Preferences/Java/E
 # MacOS
 There is no convenient way to configure environment variables for GUI apps on MacOS. For this reason the plugin looks for Node.js executable in /opt/homebrew/bin/node.
 If your Node.js is installed elsewhere, run Eclipse from terminal with PATH preconfigured.
+
+# Credits
+- This integration relies on [Eclipse LSP4E - Language Server Protocol client for Eclipse IDE](https://github.com/eclipse/lsp4e)
+- Inspriration for this project comes from the first attempt by [masecla22](https://github.com/masecla22/eclipse-github-copilot-integration). No code wsas reused from that project here.
