@@ -30,4 +30,4 @@ If your Node.js is installed elsewhere, run Eclipse from terminal with PATH prec
 
 # Credits
 - This integration relies on [Eclipse LSP4E - Language Server Protocol client for Eclipse IDE](https://github.com/eclipse/lsp4e)
-- Inspriration for this project comes from the first attempt by [masecla22](https://github.com/masecla22/eclipse-github-copilot-integration). No code wsas reused from that project here.
+- Inspriration for this project comes from the first attempt by [masecla22](https://github.com/masecla22/eclipse-github-copilot-integration). No code have been reused from that project here.
