@@ -6,11 +6,13 @@
 This integration is an unofficial prototype. Consider trying Copilot with [officially supported tools](https://docs.github.com/en/copilot/getting-started-with-github-copilot).
 Copilot is a cloud-based service provided by Github and only works with [a paid subscription](https://github.com/settings/copilot). 
 
+# Prerequisites
+- [Copilot for Neovim](https://docs.github.com/en/copilot/getting-started-with-github-copilot?tool=neovim) (no need for Neovim itself)
+- Node.js [17 or *below*](https://docs.github.com/en/copilot/getting-started-with-github-copilot?tool=neovim#prerequisites-3)
+- Java 17 or newer
+- Eclipse IDE should be configured to use Java 17 or newer
+
 # Usage
-- Install [Copilot for Neovim](https://docs.github.com/en/copilot/getting-started-with-github-copilot?tool=neovim) (no need for Neovim itself)
-- Install Node.js and add it to PATH environment variable system-wide
-- Install Java 17 or newer
-- Install Eclipse IDE and configure it to use Java 17
 - Download [the latest Copilot for Eclipse](https://github.com/vgcpge/eclipse.copilot/releases/latest/download/update-site.zip). It comes as an archived update site.
 - Follow [instructions](https://help.eclipse.org/latest/topic/org.eclipse.platform.doc.user/tasks/tasks-124.htm) to install the Copilot feature from the archived update site.
 - A warning dialog "Trust" will request a confirmation to install unsigned content. Install on your own risk and consider gifting me a code-signing certificate.
