@@ -26,12 +26,11 @@ public final class GithubCopilotProvider implements StreamConnectionProvider {
 	}
 	private final PipedInputStream input = closer.register(new OrphanPipedInputStream());
 	private final PipedOutputStream output = new PipedOutputStream();
-	private final PipedInputStream error = closer.register(new OrphanPipedInputStream());
 
 	@Override
 	public void start() throws IOException {
 		closer.register(new LanguageServer(closer.register(new OrphanPipedInputStream(output)),
-				closer.register(new PipedOutputStream(input)), closer.register(new PipedOutputStream(error)),
+				closer.register(new PipedOutputStream(input)),
 				executorService));
 		closer.register(output);
 	}
@@ -48,7 +47,7 @@ public final class GithubCopilotProvider implements StreamConnectionProvider {
 
 	@Override
 	public @Nullable InputStream getErrorStream() {
-		return error;
+		return null;
 	}
 
 	@Override

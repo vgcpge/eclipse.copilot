@@ -25,16 +25,16 @@ public class LanguageServer implements Closeable {
 
 	private final Closer closer = Closer.create();
 	
-	public LanguageServer(InputStream input, OutputStream output, OutputStream error, ExecutorService executorService) throws IOException {
+	public LanguageServer(InputStream input, OutputStream output, ExecutorService executorService) throws IOException {
 		try {
-			startProxy(input, output, error, executorService);
+			startProxy(input, output, executorService);
 		} catch (Throwable e) {
 			closer.close();
 			throw e;
 		}
 	}
 
-	private void startProxy(InputStream input, OutputStream output, OutputStream error,
+	private void startProxy(InputStream input, OutputStream output,
 			ExecutorService executorService) throws IOException {
 		CompletableFuture<LanguageClient> upstreamClient = new CompletableFuture<>();
 		CompletableFuture<Void> serverIsInitialized = new CompletableFuture<Void>();
