@@ -105,6 +105,7 @@ public class LanguageServerDecorator extends LanguageServerDecoratorBase {
 		String text = completion.text;
 		String displayText = completion.displayText;
 		CompletionItem result = new CompletionItem(firstLine(displayText));
+		// There is a bug in LSP4E that requires a HEAD element to be present. See #6.
 		String html = "<head></head><body><pre>" + text.replace("\t", "  ") + "</pre></body>";
 		result.setDetail(html);
 		// Fixes #2. If filter is set, offset computation is based on substrings,

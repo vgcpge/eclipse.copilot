@@ -8,6 +8,7 @@
 			<unit id="org.eclipse.wildwebdeveloper.feature.source.feature.group" version="1.0.2.202302250247"/>
 			<unit id="org.eclipse.platform.feature.group" version="4.27.0.v20230302-0300"/>
 			<unit id="org.eclipse.tm4e.feature.feature.group" version="0.5.2.202211261320"/>
+			<unit id="org.eclipse.lsp4e.jdt" version="0.10.2.202205031750"/>
 		</location>
 	</locations>
 </target>
