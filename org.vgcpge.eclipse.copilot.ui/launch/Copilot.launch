@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.pde.ui.RuntimeWorkbench">
-    <setAttribute key="additional_plugins">
-        <setEntry value="org.eclipse.lsp4e.jdt:0.10.2.202205031750:default:true:default:default"/>
-    </setAttribute>
+    <setAttribute key="additional_plugins"/>
     <booleanAttribute key="append.args" value="true"/>
     <booleanAttribute key="askclear" value="true"/>
     <booleanAttribute key="automaticAdd" value="true"/>
@@ -32,6 +30,7 @@
     <setAttribute key="selected_features">
         <setEntry value="org.eclipse.jdt:default"/>
         <setEntry value="org.eclipse.platform:default"/>
+        <setEntry value="org.eclipse.tm4e.feature:default"/>
         <setEntry value="org.vgcpge.eclipse.features.copilot:default"/>
     </setAttribute>
     <booleanAttribute key="show_selected_only" value="true"/>
