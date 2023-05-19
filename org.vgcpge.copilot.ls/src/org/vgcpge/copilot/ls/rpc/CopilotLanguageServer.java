@@ -22,4 +22,7 @@ public interface CopilotLanguageServer extends LanguageServer {
 	
 	@JsonRequest
 	CompletableFuture<Completions> getCompletions(CompletionParams param);
+
+	@JsonRequest
+	CompletableFuture<Completions> getCompletionsCycling(CompletionParams param);
 }

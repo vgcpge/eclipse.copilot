@@ -77,9 +77,11 @@ public class LanguageServerDecorator extends LanguageServerDecoratorBase {
 			@Override
 			public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(
 					CompletionParams position) {
-				return languageServerDelegate.thenCompose(s -> s.getCompletions(adaptCompletionParams(position)))
+				// getCompletionsCycling returns more completions than getCompletions()
+				// See https://github.com/vgcpge/eclipse.copilot/issues/7
+				return languageServerDelegate.thenCompose(s -> s.getCompletionsCycling(adaptCompletionParams(position)))
 						.thenApply(c -> Either.forLeft(c.completions.stream()
-								.map(LanguageServerDecorator::adaptCompletoinItem).collect(Collectors.toList())));
+								.map(LanguageServerDecorator::adaptCompletoinItem).distinct().collect(Collectors.toList())));
 			}
 
 			@Override
