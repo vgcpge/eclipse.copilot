@@ -24,7 +24,7 @@ Copilot is a cloud-based service provided by Github and only works with [a paid 
 
 # Java
 To work with Java Development Tools (JDT), install additionally "JDT Integration for LSP4E" from the main Eclipse update site.
-You may want to remove less useful completion assistants from Preferences/Java/Editor/Content Assist/Advanced. Leave "Language Server Protocols" enabled.
+You may want to remove less useful completion assistants from Preferences/Java/Editor/Content Assist/Advanced. Leave "Language Server Proposals" enabled.
 
 # MacOS
 There is no convenient way to configure environment variables for GUI apps on MacOS. For this reason the plugin looks for Node.js executable in /opt/homebrew/bin/node.
