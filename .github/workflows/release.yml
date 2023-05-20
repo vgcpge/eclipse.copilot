@@ -1,0 +1,74 @@
+name: Release
+on:
+  push:
+    branches: [ "release" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/maven.yml
+  release:
+    needs: build
+    outputs:
+      VERSION: ${{ steps.versionReader.outputs.VERSION }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+    - run: echo VERSION=$(python3 repository/releng/bump_patch_version.py current_version)>>"$GITHUB_OUTPUT"
+      id: versionReader
+    - run: echo Version:${{ steps.versionReader.outputs.VERSION }}
+    - name: Create Github Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with: 
+          tag_name: ${{ steps.versionReader.outputs.VERSION }}
+          name: ${{ steps.versionReader.outputs.VERSION }}
+          draft: true
+          prerelease: false
+  upload:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/download-artifact@v3
+      id: download
+      with:
+        name: repository
+        path: repository
+    - run: ls -l
+    - run: ls -ld ${{steps.download.outputs.download-path}}
+    - run: cd repository && zip -r ../repository.zip .
+    - name: Upload release artifact
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with: 
+          tag_name: ${{ needs.release.outputs.VERSION }}
+          name: ${{ needs.release.outputs.VERSION }}
+          draft: true
+          prerelease: false
+          files: './repository.zip'
+    - uses: actions/upload-pages-artifact@v1
+      with:
+        path: './repository/'
+  deploy:
+    needs: upload
+    runs-on: ubuntu-latest
+    # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v2
+    
