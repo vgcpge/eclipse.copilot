@@ -25,3 +25,9 @@ hs_err_pid*
 .idea
 bin
 target
+.META-INF_MANIFEST.MF
+.polyglot..META-INF_MANIFEST.MF
+.polyglot.category.xml.takari_issue_192
+.polyglot.feature.xml.takari_issue_192
+category.xml.takari_issue_192
+feature.xml.takari_issue_192
