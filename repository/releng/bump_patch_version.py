@@ -13,9 +13,8 @@ def current_version():
 	# Run the command and get the output: 0.0.10-SNAPSHOT
 	output = check_output(cmd, text=True)
 
-
-	# The output may contain a trailing newline and a percent sign, so we strip those
-	return output.rstrip("\n%")
+	# The output may contain a trailing newline
+	return output.rstrip("\n")
 
 def set_version(version):
 	"""
