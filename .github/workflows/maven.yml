@@ -30,7 +30,7 @@ jobs:
         distribution: 'temurin'
         cache: maven
     - name: Build with Tycho
-      run: mvn -B package --file pom.xml
+      run: mvn --batch-mode --threads 2.0C verify --file pom.xml
     - name: Upload repository
       uses: actions/upload-artifact@v3
       with:
