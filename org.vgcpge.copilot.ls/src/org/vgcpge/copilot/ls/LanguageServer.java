@@ -16,15 +16,15 @@ import org.eclipse.lsp4j.launch.LSPLauncher.Builder;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.vgcpge.copilot.ls.rpc.CopilotLanguageServer;
 
-import com.google.common.io.Closer;
+import com.google.common.base.Throwables;
 
 public class LanguageServer implements Closeable {
 	private interface LongCloseable {
 		void close() throws InterruptedException, IOException, ExecutionException;
 	}
 
-	private final Closer closer = Closer.create();
-	
+	private final FinalCloser closer = new FinalCloser();
+
 	public LanguageServer(InputStream input, OutputStream output, ExecutorService executorService) throws IOException {
 		try {
 			startProxy(input, output, executorService);
@@ -34,18 +34,19 @@ public class LanguageServer implements Closeable {
 		}
 	}
 
-	private void startProxy(InputStream input, OutputStream output,
-			ExecutorService executorService) throws IOException {
+	private void startProxy(InputStream input, OutputStream output, ExecutorService executorService)
+			throws IOException {
 		CompletableFuture<LanguageClient> upstreamClient = new CompletableFuture<>();
 		CompletableFuture<Void> serverIsInitialized = new CompletableFuture<Void>();
 
 		LanguageClientDecorator client = new LanguageClientDecorator(upstreamClient, serverIsInitialized);
 
-		LanguageServerDecorator server = new LanguageServerDecorator(() -> startDownstreamServer(executorService, client));
+		LanguageServerDecorator server = new LanguageServerDecorator(
+				() -> startDownstreamServer(executorService, client));
 
-		Launcher<LanguageClient> upstreamServerLauncher = new Builder<LanguageClient>().setExecutorService(executorService)
-				.setLocalService(server).setRemoteInterface(LanguageClient.class).setInput(input).setOutput(output)
-				.create();
+		Launcher<LanguageClient> upstreamServerLauncher = new Builder<LanguageClient>()
+				.setExecutorService(executorService).setLocalService(server).setRemoteInterface(LanguageClient.class)
+				.setInput(input).setOutput(output).create();
 		upstreamClient.complete(upstreamServerLauncher.getRemoteProxy());
 
 		server.getInitialized().thenAcceptAsync((downStreamServer) -> {
@@ -59,41 +60,43 @@ public class LanguageServer implements Closeable {
 				serverIsInitialized.complete(null);
 			}
 		}, executorService);
-		
+
 		register(upstreamServerLauncher.startListening()::get);
 	}
-	
-	private CopilotLanguageServer startDownstreamServer(ExecutorService executorService, LanguageClientDecorator client) {
+
+	private CopilotLanguageServer startDownstreamServer(ExecutorService executorService,
+			LanguageClientDecorator client) {
 		Process copilotProcess;
+		CopilotLanguageServer downStreamServer;
 		try {
 			copilotProcess = new ProcessBuilder(org.vgcpge.copilot.ls.CopilotLocator.copilotStartCommand())
 					.redirectError(Redirect.INHERIT).start();
+			register(copilotProcess::destroy);
+
+			Launcher<CopilotLanguageServer> downstreamClientLauncher = new Builder<CopilotLanguageServer>()
+					.setExecutorService(executorService).setLocalService(client)
+					.setRemoteInterface(CopilotLanguageServer.class).setInput(copilotProcess.getInputStream())
+					.wrapMessages(this::wrapMessages).setOutput(copilotProcess.getOutputStream()).create();
+			downStreamServer = downstreamClientLauncher.getRemoteProxy();
+			register(downstreamClientLauncher.startListening()::get);
+			register(downStreamServer::shutdown);
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}
-		register(copilotProcess::destroy);
-
-		Launcher<CopilotLanguageServer> downstreamClientLauncher = new Builder<CopilotLanguageServer>()
-				.setExecutorService(executorService).setLocalService(client)
-				.setRemoteInterface(CopilotLanguageServer.class).setInput(copilotProcess.getInputStream())
-				.wrapMessages(this::wrapMessages)
-				.setOutput(copilotProcess.getOutputStream()).create();
-		CopilotLanguageServer downStreamServer = downstreamClientLauncher.getRemoteProxy();
-		register(downstreamClientLauncher.startListening()::get);
-		register(downStreamServer::shutdown);
 		return downStreamServer;
 	}
-	
-	
-	
-	private synchronized <T extends LongCloseable> T register(T closeable) {
+
+	private synchronized <T extends LongCloseable> T register(T closeable) throws IOException {
 		closer.register(() -> {
 			try {
 				closeable.close();
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 				throw new IOException(e);
-			}	catch (ExecutionException e) {
+			} catch (ExecutionException e) {
+				if (e.getCause() != null) {
+					Throwables.propagateIfPossible(e.getCause(), IOException.class);
+				}
 				throw new IOException(e);
 			}
 		});
@@ -109,7 +112,7 @@ public class LanguageServer implements Closeable {
 		return message -> {
 			if (message instanceof RequestMessage) {
 				RequestMessage request = (RequestMessage) message;
-				// Fix "Invalid params:  must be object" 
+				// Fix "Invalid params: must be object"
 				if (request.getParams() == null) {
 					request.setParams(new Object());
 				}
@@ -117,6 +120,5 @@ public class LanguageServer implements Closeable {
 			messageconsumer1.consume(message);
 		};
 	}
-
 
 }

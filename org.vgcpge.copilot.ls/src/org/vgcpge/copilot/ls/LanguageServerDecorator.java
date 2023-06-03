@@ -1,7 +1,5 @@
 package org.vgcpge.copilot.ls;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintWriter;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -23,6 +21,8 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.vgcpge.copilot.ls.rpc.CopilotLanguageServer;
+
+import com.google.common.base.Throwables;
 
 public class LanguageServerDecorator extends LanguageServerDecoratorBase {
 	private final CompletableFuture<CopilotLanguageServer> languageServerDelegate;
@@ -74,13 +74,7 @@ public class LanguageServerDecorator extends LanguageServerDecoratorBase {
 	}
 
 	private static ResponseError toResponseError(ResponseErrorCode responseErrorCode, Exception e) {
-		ResponseError error = new ResponseError(responseErrorCode, e.getLocalizedMessage(), e);
-		ByteArrayOutputStream stackTrace = new ByteArrayOutputStream();
-		PrintWriter stackTraceWriter = new PrintWriter(stackTrace);
-		e.printStackTrace(stackTraceWriter);
-		stackTraceWriter.flush();
-		error.setData(stackTrace.toString());
-		return error;
+		return new ResponseError(responseErrorCode, e.getLocalizedMessage(), Throwables.getStackTraceAsString(e));
 	}
 
 	@Override

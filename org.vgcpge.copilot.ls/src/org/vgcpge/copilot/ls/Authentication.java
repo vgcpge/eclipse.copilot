@@ -1,7 +1,5 @@
 package org.vgcpge.copilot.ls;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -17,6 +15,8 @@ import org.vgcpge.copilot.ls.rpc.CheckStatusOptions;
 import org.vgcpge.copilot.ls.rpc.CopilotLanguageServer;
 import org.vgcpge.copilot.ls.rpc.SignInConfirmParams;
 import org.vgcpge.copilot.ls.rpc.Status;
+
+import com.google.common.base.Throwables;
 
 public class Authentication {
 	private final LanguageClient client;
@@ -50,11 +50,7 @@ public class Authentication {
 			Thread.currentThread().interrupt();
 			throw new IllegalStateException(e);
 		} catch (Exception e) {
-			var message = new StringWriter();
-			try (PrintWriter printer = new PrintWriter(message)) {
-				e.printStackTrace(printer);
-			}
-			client.logMessage(new MessageParams(MessageType.Error, message.toString()));
+			client.logMessage(new MessageParams(MessageType.Error, Throwables.getStackTraceAsString(e)));
 		}
 	}
 

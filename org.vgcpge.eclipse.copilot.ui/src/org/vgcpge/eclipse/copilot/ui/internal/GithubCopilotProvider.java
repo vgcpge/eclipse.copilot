@@ -11,21 +11,26 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.lsp4e.server.StreamConnectionProvider;
+import org.vgcpge.copilot.ls.FinalCloser;
 import org.vgcpge.copilot.ls.LanguageServer;
 
-import com.google.common.io.Closer;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public final class GithubCopilotProvider implements StreamConnectionProvider {
-	private final Closer closer = Closer.create();
+	private final FinalCloser closer = new FinalCloser();
 	private final ExecutorService executorService;
-	{
-		executorService = Executors
-				.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("CopilotProxy-%d").build());
-		closer.register(this::shutdownAndAwaitTermination);
-	}
-	private final PipedInputStream input = closer.register(new OrphanPipedInputStream());
+	private final PipedInputStream input;
 	private final PipedOutputStream output = new PipedOutputStream();
+	{
+		try {
+			input = closer.register(new OrphanPipedInputStream());
+			executorService = Executors
+					.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("CopilotProxy-%d").build());
+			closer.register(this::shutdownAndAwaitTermination);
+		} catch (IOException e) {
+			throw new IllegalStateException(e);
+		}
+	}
 
 	@Override
 	public void start() throws IOException {
@@ -47,6 +52,7 @@ public final class GithubCopilotProvider implements StreamConnectionProvider {
 
 	@Override
 	public @Nullable InputStream getErrorStream() {
+		// LSP4E never poll the return value, so we can't return anything here - unpolled error stream will lead to agent's hangup
 		return null;
 	}
 
