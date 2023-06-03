@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Language Server Tests
+Bundle-SymbolicName: org.vgcpge.copilot.ls.test
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: VGCPEGE
+Fragment-Host: org.vgcpge.copilot.ls;bundle-version="0.0.11"
+Require-Bundle: org.junit
+Automatic-Module-Name: org.vgcpge.copilot.ls.test
+Bundle-RequiredExecutionEnvironment: JavaSE-17

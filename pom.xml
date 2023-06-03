@@ -16,6 +16,7 @@
 
 	<modules>
 		<module>org.vgcpge.copilot.ls</module>
+		<module>org.vgcpge.copilot.ls.test</module>
 		<module>org.vgcpge.eclipse.copilot.ui</module>
 		<module>org.vgcpge.eclipse.features.copilot</module>
 		<module>repository</module>
