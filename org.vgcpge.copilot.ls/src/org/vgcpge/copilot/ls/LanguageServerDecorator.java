@@ -1,5 +1,7 @@
 package org.vgcpge.copilot.ls;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -15,7 +17,10 @@ import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 import org.eclipse.lsp4j.services.TextDocumentService;
 import org.vgcpge.copilot.ls.rpc.CopilotLanguageServer;
 
@@ -27,8 +32,9 @@ public class LanguageServerDecorator extends LanguageServerDecoratorBase {
 	public LanguageServerDecorator(Supplier<CopilotLanguageServer> startCopilot) {
 		this(new CompletableFuture<>(), startCopilot);
 	}
-	
-	private LanguageServerDecorator(CompletableFuture<CopilotLanguageServer> languageServerDelegate, Supplier<CopilotLanguageServer> startCopilot) {
+
+	private LanguageServerDecorator(CompletableFuture<CopilotLanguageServer> languageServerDelegate,
+			Supplier<CopilotLanguageServer> startCopilot) {
 		super(languageServerDelegate);
 		this.languageServerDelegate = Objects.requireNonNull(languageServerDelegate);
 		this.startCopilot = Objects.requireNonNull(startCopilot);
@@ -39,7 +45,7 @@ public class LanguageServerDecorator extends LanguageServerDecoratorBase {
 		try {
 			languageServerDelegate.complete(startCopilot.get());
 		} catch (Exception e) {
-			languageServerDelegate.completeExceptionally(e);
+			return createErrorResponse(ResponseErrorCode.ServerNotInitialized, e);
 		}
 		CompletableFuture<InitializeResult> result = super.initialize(params).thenApply(result2 -> {
 			CompletionOptions completionProvider = result2.getCapabilities().getCompletionProvider();
@@ -61,6 +67,22 @@ public class LanguageServerDecorator extends LanguageServerDecoratorBase {
 		return result;
 	}
 
+	private static <T> CompletableFuture<T> createErrorResponse(ResponseErrorCode responseErrorCode, Exception e) {
+		CompletableFuture<T> result = new CompletableFuture<T>();
+		result.completeExceptionally(new ResponseErrorException(toResponseError(responseErrorCode, e)));
+		return result;
+	}
+
+	private static ResponseError toResponseError(ResponseErrorCode responseErrorCode, Exception e) {
+		ResponseError error = new ResponseError(responseErrorCode, e.getLocalizedMessage(), e);
+		ByteArrayOutputStream stackTrace = new ByteArrayOutputStream();
+		PrintWriter stackTraceWriter = new PrintWriter(stackTrace);
+		e.printStackTrace(stackTraceWriter);
+		stackTraceWriter.flush();
+		error.setData(stackTrace.toString());
+		return error;
+	}
+
 	@Override
 	public CompletableFuture<Object> shutdown() {
 		return super.shutdown();
@@ -73,15 +95,17 @@ public class LanguageServerDecorator extends LanguageServerDecoratorBase {
 
 	@Override
 	public TextDocumentService getTextDocumentService() {
-		return new TextDocumentServiceDecoratorBase(languageServerDelegate.thenApply(CopilotLanguageServer::getTextDocumentService)) {
+		return new TextDocumentServiceDecoratorBase(
+				languageServerDelegate.thenApply(CopilotLanguageServer::getTextDocumentService)) {
 			@Override
 			public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(
 					CompletionParams position) {
 				// getCompletionsCycling returns more completions than getCompletions()
 				// See https://github.com/vgcpge/eclipse.copilot/issues/7
 				return languageServerDelegate.thenCompose(s -> s.getCompletionsCycling(adaptCompletionParams(position)))
-						.thenApply(c -> Either.forLeft(c.completions.stream()
-								.map(LanguageServerDecorator::adaptCompletoinItem).distinct().collect(Collectors.toList())));
+						.thenApply(c -> Either
+								.forLeft(c.completions.stream().map(LanguageServerDecorator::adaptCompletoinItem)
+										.distinct().collect(Collectors.toList())));
 			}
 
 			@Override

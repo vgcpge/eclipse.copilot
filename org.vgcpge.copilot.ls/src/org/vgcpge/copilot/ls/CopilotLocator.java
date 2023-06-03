@@ -65,7 +65,7 @@ public class CopilotLocator {
 				.filter(Files::isRegularFile) //
 				.filter(Files::isReadable) //
 				.findFirst() //
-				.orElseThrow(() -> new IllegalStateException("Copilot is not installed."));
+				.orElseThrow(() -> new IllegalStateException("Copilot is not installed. Install Github Copilot for Nvim: https://docs.github.com/en/copilot/getting-started-with-github-copilot?tool=neovim"));
 	}
 
 	private static List<Path> configurationLocations() {
