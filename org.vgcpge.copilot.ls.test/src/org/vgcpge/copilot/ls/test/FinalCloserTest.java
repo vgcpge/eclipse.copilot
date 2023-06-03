@@ -49,6 +49,32 @@ public class FinalCloserTest {
 		}
 	}
 
+	private static final class TestError extends Error {
+
+		private static final long serialVersionUID = 330494317489527704L;
+
+	}
+
+	@Test(expected = TestError.class)
+	public void error() throws IOException {
+		Closeable erroneous = () -> {
+			throw new TestError();
+		};
+		CloseableMock first = new CloseableMock();
+		CloseableMock last = new CloseableMock();
+		Closeable[] mocks = new Closeable[] { first, erroneous, last };
+		try (FinalCloser closer = new FinalCloser()) {
+			for (Closeable mock : mocks) {
+				Assert.assertSame(mock, closer.register(mock));
+			}
+			Assert.assertFalse(first.closed.get());
+			Assert.assertFalse(last.closed.get());
+		} finally {
+			Assert.assertTrue(last.closed.get());
+			Assert.assertTrue(first.closed.get());
+		}
+	}
+
 	@Test
 	public void concurrentClosing() throws IOException, InterruptedException, ExecutionException {
 		List<Closeable> resources = Collections.synchronizedList(new ArrayList<Closeable>());

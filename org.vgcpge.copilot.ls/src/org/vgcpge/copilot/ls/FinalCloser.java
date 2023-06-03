@@ -42,7 +42,7 @@ public final class FinalCloser implements Closeable {
 			IOException closedException = new ResourceClosedException();
 			try {
 				close();
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				closedException.addSuppressed(e);
 			}
 			throw closedException;
@@ -82,7 +82,7 @@ public final class FinalCloser implements Closeable {
 				}
 				try {
 					closeable.close();
-				} catch (Exception e) {
+				} catch (Throwable e) {
 					rememberError(e);
 				}
 			}
@@ -97,8 +97,8 @@ public final class FinalCloser implements Closeable {
 		}
 	}
 
-	private void rememberError(Exception e) {
-		assert e instanceof RuntimeException || e instanceof IOException;
+	private void rememberError(Throwable e) {
+		assert e instanceof RuntimeException || e instanceof IOException || e instanceof Error;
 		synchronized (lock) {
 			if (error == null) {
 				error = e;
