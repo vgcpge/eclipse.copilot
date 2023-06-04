@@ -5,11 +5,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+import org.eclipse.lsp4j.MessageParams;
+import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage;
@@ -17,6 +20,7 @@ import org.eclipse.lsp4j.launch.LSPLauncher.Builder;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.vgcpge.copilot.ls.rpc.CopilotLanguageServer;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 
 public class LanguageServer implements Closeable {
@@ -71,15 +75,20 @@ public class LanguageServer implements Closeable {
 		Process copilotProcess;
 		CopilotLanguageServer downStreamServer;
 		try {
-			copilotProcess = new ProcessBuilder(org.vgcpge.copilot.ls.CopilotLocator.copilotStartCommand())
+			List<String> command = CopilotLocator.copilotStartCommand();
+			client.logMessage(new MessageParams(MessageType.Info, "Starting " + Joiner.on(' ').join(command)));
+			copilotProcess = new ProcessBuilder(command)
 					.redirectError(Redirect.INHERIT).start();
 			register(copilotProcess::destroy);
 
 			@SuppressWarnings("resource")
+			OutputStream output = copilotProcess.getOutputStream();
+			@SuppressWarnings("resource")
+			InputStream input = copilotProcess.getInputStream();
 			Launcher<CopilotLanguageServer> downstreamClientLauncher = new Builder<CopilotLanguageServer>()
 					.setExecutorService(executorService).setLocalService(client)
-					.setRemoteInterface(CopilotLanguageServer.class).setInput(closer.register(copilotProcess.getInputStream()))
-					.wrapMessages(this::wrapMessages).setOutput(closer.register(copilotProcess.getOutputStream())).create();
+					.setRemoteInterface(CopilotLanguageServer.class).setInput(input)
+					.wrapMessages(this::wrapMessages).setOutput(output).create();
 			downStreamServer = downstreamClientLauncher.getRemoteProxy();
 			Future<Void> listenTask = downstreamClientLauncher.startListening();
 			register(() -> listenTask.cancel(true));
