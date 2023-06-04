@@ -12,14 +12,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.vgcpge.copilot.ls.FinalCloser;
 import org.vgcpge.copilot.ls.ResourceClosedException;
+import org.vgcpge.copilot.ls.SafeCloser;
 
-public class FinalCloserTest {
+public class SafeCloserTest {
 
 	@Test
 	public void empty() throws IOException {
-		try (FinalCloser closer = new FinalCloser()) {
+		try (SafeCloser closer = new SafeCloser()) {
 
 		}
 	}
@@ -34,9 +34,10 @@ public class FinalCloserTest {
 	}
 
 	@Test
+	@SuppressWarnings("resource")
 	public void multiple() throws IOException {
 		CloseableMock[] mocks = new CloseableMock[] { new CloseableMock(), new CloseableMock(), new CloseableMock() };
-		try (FinalCloser closer = new FinalCloser()) {
+		try (SafeCloser closer = new SafeCloser()) {
 			for (CloseableMock mock : mocks) {
 				Assert.assertSame(mock, closer.register(mock));
 			}
@@ -55,6 +56,7 @@ public class FinalCloserTest {
 
 	}
 
+	@SuppressWarnings("resource")
 	@Test(expected = TestError.class)
 	public void error() throws IOException {
 		Closeable erroneous = () -> {
@@ -63,7 +65,7 @@ public class FinalCloserTest {
 		CloseableMock first = new CloseableMock();
 		CloseableMock last = new CloseableMock();
 		Closeable[] mocks = new Closeable[] { first, erroneous, last };
-		try (FinalCloser closer = new FinalCloser()) {
+		try (SafeCloser closer = new SafeCloser()) {
 			for (Closeable mock : mocks) {
 				Assert.assertSame(mock, closer.register(mock));
 			}
@@ -75,6 +77,7 @@ public class FinalCloserTest {
 		}
 	}
 
+	@SuppressWarnings("resource")
 	@Test
 	public void concurrentClosing() throws IOException, InterruptedException, ExecutionException {
 		List<Closeable> resources = Collections.synchronizedList(new ArrayList<Closeable>());
@@ -94,7 +97,7 @@ public class FinalCloserTest {
 
 		for (int attempts = 0; attempts < 100; attempts++) {
 
-			try (FinalCloser closer = new FinalCloser()) {
+			try (SafeCloser closer = new SafeCloser()) {
 
 				var finalResult = threadPool.submit(() -> {
 					List<Future<?>> results = new ArrayList<>();

@@ -8,11 +8,15 @@ import java.util.Deque;
 import com.google.common.base.Throwables;
 
 /**
- * Thread-safe {@link com.google.common.io.Closer}
- * 
  * Closes all registered Closeables strictly in reverse order of registration.
+ * 
+ * Differences from  {@link com.google.common.io.Closer}:
+ * <li> Closing of a resource may be done out of registration thread. All registered resources need to be thread-safe.
+ * <li> Close operation is final, further registrations throw  {@link ResourceClosedException and dispose given resources ASAP. 
+ * 
+ * @see com.google.common.io.Closer
  */
-public final class FinalCloser implements Closeable {
+public final class SafeCloser implements Closeable {
 
 	private final Deque<Closeable> stack = new ArrayDeque<>();
 	private final Object lock = new Object();
@@ -22,12 +26,12 @@ public final class FinalCloser implements Closeable {
 	private Throwable error = null;
 
 	/**
-	 * Registers the given {@code closeable} to be closed when this
-	 * {@code FinalCloser} is {@linkplain #close closed}.
-	 * 
-	 * @throws IOException is this {@code FinalCloser} is already closed. Given
-	 *                     {@code closeable} is immediately closed in this case.
-	 *                     The close operation may be done in another thread.
+	 * @param closeable the {@code Closeable} to close when {@code FinalCloser} is
+	 *                  {@linkplain #close closed}.
+	 * @throws ResourceClosedException if this {@code FinalCloser} is already closed. Given
+	 *                     {@code closeable} will be closed ASAP. The operation
+	 *                     may be done in another thread.
+	 * @throws IOException if any resources closed throw.
 	 * @return the given {@code closeable}
 	 */
 	public <T extends Closeable> T register(T closeable) throws IOException {
@@ -35,8 +39,8 @@ public final class FinalCloser implements Closeable {
 			return closeable;
 		boolean closedCopy;
 		synchronized (lock) {
-			stack.push(closeable);
 			closedCopy = this.closed;
+			stack.push(closeable);
 		}
 		if (closedCopy) {
 			IOException closedException = new ResourceClosedException();
@@ -57,8 +61,9 @@ public final class FinalCloser implements Closeable {
 	}
 
 	/**
-	 * Close all registered objects. No futher operations are allowed. May be called
-	 * twice.
+	 * Close all registered objects. No further operations are allowed. All attempts
+	 * to register more resources will result in them being closed ASAP. May be
+	 * called multiple times.
 	 **/
 	@Override
 	public void close() throws IOException {
@@ -73,14 +78,16 @@ public final class FinalCloser implements Closeable {
 			for (;;) {
 				Closeable closeable = null;
 				synchronized (lock) {
-					closeable = stack.pollFirst();
+					var tmp = stack.pollFirst();
+					closeable = tmp; // Prevent false leaked resource warning
 					if (closeable == null) {
-						busy = false; // Can't do this in another synchronized section, as another thread may skip
-										// execution while busy == true
+						busy = false; // Another thread may skip execution while busy == true, reset flag now
 						break;
 					}
 				}
 				try {
+					// External code may take a significant time to execute, so we are calling it
+					// outside of mutex protection
 					closeable.close();
 				} catch (Throwable e) {
 					rememberError(e);

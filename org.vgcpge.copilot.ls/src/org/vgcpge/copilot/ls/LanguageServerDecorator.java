@@ -78,16 +78,6 @@ public class LanguageServerDecorator extends LanguageServerDecoratorBase {
 	}
 
 	@Override
-	public CompletableFuture<Object> shutdown() {
-		return super.shutdown();
-	}
-
-	@Override
-	public void exit() {
-		super.exit();
-	}
-
-	@Override
 	public TextDocumentService getTextDocumentService() {
 		return new TextDocumentServiceDecoratorBase(
 				languageServerDelegate.thenApply(CopilotLanguageServer::getTextDocumentService)) {

@@ -8,6 +8,7 @@ import java.lang.ProcessBuilder.Redirect;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
@@ -23,7 +24,7 @@ public class LanguageServer implements Closeable {
 		void close() throws InterruptedException, IOException, ExecutionException;
 	}
 
-	private final FinalCloser closer = new FinalCloser();
+	private final SafeCloser closer = new SafeCloser();
 
 	public LanguageServer(InputStream input, OutputStream output, ExecutorService executorService) throws IOException {
 		try {
@@ -61,7 +62,8 @@ public class LanguageServer implements Closeable {
 			}
 		}, executorService);
 
-		register(upstreamServerLauncher.startListening()::get);
+		Future<?> listenTask = upstreamServerLauncher.startListening();
+		register(() -> listenTask.cancel(true));
 	}
 
 	private CopilotLanguageServer startDownstreamServer(ExecutorService executorService,
@@ -73,19 +75,21 @@ public class LanguageServer implements Closeable {
 					.redirectError(Redirect.INHERIT).start();
 			register(copilotProcess::destroy);
 
+			@SuppressWarnings("resource")
 			Launcher<CopilotLanguageServer> downstreamClientLauncher = new Builder<CopilotLanguageServer>()
 					.setExecutorService(executorService).setLocalService(client)
-					.setRemoteInterface(CopilotLanguageServer.class).setInput(copilotProcess.getInputStream())
-					.wrapMessages(this::wrapMessages).setOutput(copilotProcess.getOutputStream()).create();
+					.setRemoteInterface(CopilotLanguageServer.class).setInput(closer.register(copilotProcess.getInputStream()))
+					.wrapMessages(this::wrapMessages).setOutput(closer.register(copilotProcess.getOutputStream())).create();
 			downStreamServer = downstreamClientLauncher.getRemoteProxy();
-			register(downstreamClientLauncher.startListening()::get);
-			register(downStreamServer::shutdown);
+			Future<Void> listenTask = downstreamClientLauncher.startListening();
+			register(() -> listenTask.cancel(true));
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}
 		return downStreamServer;
 	}
 
+	@SuppressWarnings("resource")
 	private synchronized <T extends LongCloseable> T register(T closeable) throws IOException {
 		closer.register(() -> {
 			try {

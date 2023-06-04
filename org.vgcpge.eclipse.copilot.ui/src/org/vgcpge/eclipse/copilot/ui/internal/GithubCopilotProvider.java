@@ -11,13 +11,14 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.lsp4e.server.StreamConnectionProvider;
-import org.vgcpge.copilot.ls.FinalCloser;
+import org.vgcpge.copilot.ls.SafeCloser;
 import org.vgcpge.copilot.ls.LanguageServer;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+@SuppressWarnings("resource")
 public final class GithubCopilotProvider implements StreamConnectionProvider {
-	private final FinalCloser closer = new FinalCloser();
+	private final SafeCloser closer = new SafeCloser();
 	private final ExecutorService executorService;
 	private final PipedInputStream input;
 	private final PipedOutputStream output = new PipedOutputStream();
