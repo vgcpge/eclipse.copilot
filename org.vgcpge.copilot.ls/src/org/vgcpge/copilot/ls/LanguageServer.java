@@ -73,7 +73,7 @@ public class LanguageServer implements Closeable {
 	private static String privacyFilter(String data) {
 		String home = System.getProperty("user.home");
 		if (home != null) {
-			data = data.replace(home, "****");
+			data = data.replace(home, "${HOME}");
 		}
 		return data;
 	}
