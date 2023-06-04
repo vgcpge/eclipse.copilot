@@ -99,7 +99,7 @@ public class LanguageServer implements Closeable {
 					.setOutput(output).create();
 			downStreamServer = downstreamClientLauncher.getRemoteProxy();
 			Future<Void> listenTask = downstreamClientLauncher.startListening();
-			register(() -> listenTask.cancel(true));
+			register(() -> listenTask.get());
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}
