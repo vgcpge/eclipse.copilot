@@ -90,9 +90,9 @@ public class LanguageServer implements Closeable {
 			register(copilotProcess::destroy);
 
 			@SuppressWarnings("resource")
-			OutputStream output = copilotProcess.getOutputStream();
+			OutputStream output = closer.register(copilotProcess.getOutputStream());
 			@SuppressWarnings("resource")
-			InputStream input = copilotProcess.getInputStream();
+			InputStream input = closer.register(copilotProcess.getInputStream());
 			Launcher<CopilotLanguageServer> downstreamClientLauncher = new Builder<CopilotLanguageServer>()
 					.setExecutorService(executorService).setLocalService(client)
 					.setRemoteInterface(CopilotLanguageServer.class).setInput(input).wrapMessages(this::wrapMessages)
@@ -107,7 +107,7 @@ public class LanguageServer implements Closeable {
 	}
 
 	@SuppressWarnings("resource")
-	private synchronized <T extends LongCloseable> T register(T closeable) throws IOException {
+	private <T extends LongCloseable> T register(T closeable) throws IOException {
 		closer.register(() -> {
 			try {
 				closeable.close();
@@ -125,7 +125,7 @@ public class LanguageServer implements Closeable {
 	}
 
 	@Override
-	public synchronized void close() throws IOException {
+	public void close() throws IOException {
 		closer.close();
 	}
 
