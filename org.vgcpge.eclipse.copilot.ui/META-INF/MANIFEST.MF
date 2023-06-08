@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Unoffical Github Copilot
 Bundle-SymbolicName: org.vgcpge.eclipse.copilot.ui;singleton:=true
-Bundle-Version: 0.0.11.qualifier
+Bundle-Version: 0.0.12.qualifier
 Require-Bundle: org.eclipse.lsp4e;bundle-version="0.15.0",
  org.vgcpge.copilot.ls;bundle-version="0.0.8",
  com.google.guava;bundle-version="30.1.0",
