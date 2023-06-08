@@ -10,6 +10,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.eclipse.lsp4j.MessageParams;
@@ -25,7 +27,7 @@ import com.google.common.base.Throwables;
 
 public class LanguageServer implements Closeable {
 	private interface LongCloseable {
-		void close() throws InterruptedException, IOException, ExecutionException;
+		void close() throws InterruptedException, IOException, ExecutionException, TimeoutException;
 	}
 
 	private final SafeCloser closer = new SafeCloser();
@@ -99,7 +101,7 @@ public class LanguageServer implements Closeable {
 					.setOutput(output).create();
 			downStreamServer = downstreamClientLauncher.getRemoteProxy();
 			Future<Void> listenTask = downstreamClientLauncher.startListening();
-			register(() -> listenTask.get());
+			register(() -> listenTask.cancel(true));
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}
@@ -118,6 +120,8 @@ public class LanguageServer implements Closeable {
 				if (e.getCause() != null) {
 					Throwables.propagateIfPossible(e.getCause(), IOException.class);
 				}
+				throw new IOException(e);
+			} catch (TimeoutException e) {
 				throw new IOException(e);
 			}
 		});
