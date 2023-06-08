@@ -10,7 +10,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -72,21 +71,13 @@ public class LanguageServer implements Closeable {
 		register(() -> listenTask.cancel(true));
 	}
 
-	private static String privacyFilter(String data) {
-		String home = System.getProperty("user.home");
-		if (home != null) {
-			data = data.replace(home, "${HOME}");
-		}
-		return data;
-	}
-
 	private CopilotLanguageServer startDownstreamServer(ExecutorService executorService,
 			LanguageClientDecorator client) {
 		Process copilotProcess;
 		CopilotLanguageServer downStreamServer;
 		try {
 			List<String> command = CopilotLocator.copilotStartCommand();
-			String publicCommand = command.stream().map(LanguageServer::privacyFilter).collect(Collectors.joining(" "));
+			String publicCommand = command.stream().map(CopilotLocator::privacyFilter).collect(Collectors.joining(" "));
 			client.logMessage(new MessageParams(MessageType.Info, "Starting " + publicCommand));
 			copilotProcess = new ProcessBuilder(command).redirectError(Redirect.INHERIT).start();
 			register(copilotProcess::destroy);

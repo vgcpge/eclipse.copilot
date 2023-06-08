@@ -7,7 +7,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.base.Joiner;
+
 public class CopilotLocator {
+	private static final String NO_COPILOT_TEMPLATE = "Copilot is not installed. Install Github Copilot for Nvim: https://docs.github.com/en/copilot/getting-started-with-github-copilot?tool=neovim\nTested locations:\n%s";
+	private static final String NO_NODE_TEMPLATE = "Can't locate Node.js. Configure PATH.\nTested locations:\n%s";
 	private static final Path NVIM_RELATIVE_PATH = Path.of("nvim", "pack", "github", "start", "copilot.vim", "copilot",
 			"dist", "agent.js");
 	private static final List<Path> NODE_PATH_CANDIDATES = List.of(Paths.get("/opt/homebrew/bin/node"));
@@ -15,22 +19,26 @@ public class CopilotLocator {
 	public CopilotLocator() {
 		super();
 	}
-	
+
 	public static List<String> copilotStartCommand() {
 		return List.of(findNode(), findAgent().toString());
 	}
 
 	private static String findNode() {
+		List<String> testedLocations = new ArrayList<>();
 		try {
-			
+
 			try {
-				if (isValidNode("node")) {
-					return "node";
+				String simpleCommand = "node";
+				testedLocations.add(simpleCommand);
+				if (isValidNode(simpleCommand)) {
+					return simpleCommand;
 				}
 			} catch (IOException e) {
 				// No PATH
 			}
 			for (Path path : NODE_PATH_CANDIDATES) {
+				testedLocations.add(privacyFilter(path.toString()));
 				if (Files.isExecutable(path)) {
 					try {
 						if (isValidNode(path.toString())) {
@@ -41,7 +49,7 @@ public class CopilotLocator {
 					}
 				}
 			}
-			throw new IllegalStateException("Can't locate Node.js. Configure PATH.");
+			throw new IllegalStateException(String.format(NO_NODE_TEMPLATE, Joiner.on("\n").join(testedLocations)));
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			throw new IllegalStateException(e);
@@ -60,12 +68,15 @@ public class CopilotLocator {
 	}
 
 	private static Path findAgent() {
+		List<String> testedLocations = new ArrayList<>();
 		return configurationLocations().stream() //
 				.map(location -> location.resolve(NVIM_RELATIVE_PATH)) //
+				.peek(path -> testedLocations.add(privacyFilter(path.toString()))) //
 				.filter(Files::isRegularFile) //
 				.filter(Files::isReadable) //
 				.findFirst() //
-				.orElseThrow(() -> new IllegalStateException("Copilot is not installed. Install Github Copilot for Nvim: https://docs.github.com/en/copilot/getting-started-with-github-copilot?tool=neovim"));
+				.orElseThrow(() -> new IllegalStateException(
+						String.format(NO_COPILOT_TEMPLATE, Joiner.on("\n").join(testedLocations))));
 	}
 
 	private static List<Path> configurationLocations() {
@@ -77,5 +88,13 @@ public class CopilotLocator {
 			result.add(Paths.get(data));
 		}
 		return result;
+	}
+
+	public static String privacyFilter(String data) {
+		String home = System.getProperty("user.home");
+		if (home != null) {
+			data = data.replace(home, "${HOME}");
+		}
+		return data;
 	}
 }
