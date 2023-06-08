@@ -59,6 +59,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
           tag_name: releases/${{ needs.release.outputs.VERSION }}
+          name: ${{ needs.release.outputs.VERSION }}
           files: './repository.zip'
     - uses: actions/upload-pages-artifact@v1
       with:
