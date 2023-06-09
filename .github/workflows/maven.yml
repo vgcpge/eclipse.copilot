@@ -31,6 +31,7 @@ jobs:
         cache: maven
     - name: Build with Tycho
       run: mvn --batch-mode --threads 2.0C clean verify --file pom.xml
+    - run: cp repository/index.html repository/target/repository/
     - name: Upload repository
       uses: actions/upload-artifact@v3
       with:
