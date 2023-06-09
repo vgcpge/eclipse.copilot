@@ -2,6 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Language Server for Github Copilot
 Bundle-SymbolicName: org.vgcpge.copilot.ls
+Bundle-Vendor: VGCPGE
 Bundle-Version: 0.0.12.qualifier
 Export-Package: org.vgcpge.copilot.ls
 Require-Bundle: org.eclipse.lsp4j.jsonrpc,

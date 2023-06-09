@@ -3,5 +3,12 @@
    <feature id="org.vgcpge.eclipse.features.copilot">
       <category name="org.vgcpge.copilot"/>
    </feature>
+   <bundle id="org.vgcpge.copilot.ls.source">
+      <category name="org.vgcpge.copilot.sdk"/>
+   </bundle>
+   <bundle id="org.vgcpge.eclipse.copilot.ui.source">
+      <category name="org.vgcpge.copilot.sdk"/>
+   </bundle>
    <category-def name="org.vgcpge.copilot" label="Copilot"/>
+   <category-def name="org.vgcpge.copilot.sdk" label="Developer Resources"/>
 </site>
