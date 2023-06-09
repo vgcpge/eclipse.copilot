@@ -7,7 +7,7 @@
 - Content assist completions
 
 # Warning
-This integration is an unofficial prototype. Consider trying Copilot with [officially supported tools](https://docs.github.com/en/copilot/getting-started-with-github-copilot).
+This integration is unofficial. Consider trying Copilot with [officially supported tools](https://docs.github.com/en/copilot/getting-started-with-github-copilot).
 Copilot is a cloud-based service provided by Github and only works with [a paid subscription](https://github.com/settings/copilot). 
 
 # Prerequisites
