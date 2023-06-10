@@ -2,10 +2,8 @@ package org.vgcpge.copilot.ls;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Deque;
 
-import com.google.common.base.Throwables;
+import com.google.common.io.Closer;
 
 /**
  * Closes all registered Closeables strictly in reverse order of registration.
@@ -19,13 +17,9 @@ import com.google.common.base.Throwables;
  * @see com.google.common.io.Closer
  */
 public final class SafeCloser implements Closeable {
-
-	private final Deque<Closeable> stack = new ArrayDeque<>();
+	private final Closer closer = Closer.create();
 	private final Object lock = new Object();
 	private boolean closed = false;
-	/** Coordinates different closing threads, preventing out-of-order disposal. */
-	private boolean busy = false;
-	private Throwable error = null;
 
 	/**
 	 * @param closeable the {@code Closeable} to close when {@code FinalCloser} is
@@ -44,18 +38,17 @@ public final class SafeCloser implements Closeable {
 		boolean closedCopy;
 		synchronized (lock) {
 			closedCopy = this.closed;
-			stack.push(closeable);
-		}
-		if (closedCopy) {
-			IOException closedException = new ResourceClosedException();
-			try {
-				close();
-			} catch (Throwable e) {
-				closedException.addSuppressed(e);
+			if (!closedCopy) {
+				return closer.register(closeable);
 			}
-			throw closedException;
 		}
-		return closeable;
+		IOException closedException = new ResourceClosedException();
+		try {
+			closeable.close();
+		} catch (Throwable e) {
+			closedException.addSuppressed(e);
+		}
+		throw closedException;
 	}
 
 	public boolean isClosed() {
@@ -73,52 +66,7 @@ public final class SafeCloser implements Closeable {
 	public void close() throws IOException {
 		synchronized (lock) {
 			closed = true;
-			if (busy) {
-				return;
-			}
-			busy = true;
 		}
-		try {
-			for (;;) {
-				Closeable closeable = null;
-				synchronized (lock) {
-					var tmp = stack.pollFirst();
-					closeable = tmp; // Prevent false leaked resource warning
-					if (closeable == null) {
-						// Another thread may skip execution while busy == true, reset flag now
-						busy = false;
-						break;
-					}
-				}
-				try {
-					// External code may take a significant time to execute, so we are calling it
-					// outside of mutex protection
-					closeable.close();
-				} catch (Throwable e) {
-					rememberError(e);
-				}
-			}
-		} finally {
-			synchronized (lock) {
-				if (error != null) {
-					Throwables.propagateIfPossible(error, IOException.class);
-					// not possible, because error can only be either RuntimeException, Error
-					// or IOException
-					throw new AssertionError(error);
-				}
-			}
-		}
+		closer.close();
 	}
-
-	private void rememberError(Throwable e) {
-		assert e instanceof RuntimeException || e instanceof IOException || e instanceof Error;
-		synchronized (lock) {
-			if (error == null) {
-				error = e;
-			} else {
-				error.addSuppressed(e);
-			}
-		}
-	}
-
 }
