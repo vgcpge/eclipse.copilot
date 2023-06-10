@@ -95,7 +95,7 @@ public class SafeCloserTest {
 
 		ExecutorService threadPool = java.util.concurrent.Executors.newFixedThreadPool(10);
 
-		for (int attempts = 0; attempts < 100; attempts++) {
+		for (int attempts = 0; attempts < 10000; attempts++) {
 
 			try (SafeCloser closer = new SafeCloser()) {
 
@@ -103,13 +103,16 @@ public class SafeCloserTest {
 					List<Future<?>> results = new ArrayList<>();
 					for (int i = 0; i < 100; i++) {
 						results.add(threadPool.submit(() -> {
-							try {
-								Mock mock = new Mock();
-								Assert.assertSame(mock, closer.register(mock));
-							} catch (ResourceClosedException e) {
-								// Expected
-							} catch (IOException e) {
-								throw new AssertionError(e);
+							for (int j = 0; j < 10000; j++) {
+								try {
+									Mock mock = new Mock();
+									Assert.assertSame(mock, closer.register(mock));
+								} catch (ResourceClosedException e) {
+									// Expected
+									break;
+								} catch (IOException e) {
+									throw new AssertionError(e);
+								}
 							}
 						}));
 					}
