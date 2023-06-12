@@ -14,21 +14,23 @@ on:
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
-    secrets:
-      CODE_SIGNING_KEYSTORE:
-        description: 'Base 64 encoded keystore with code-signing private key. Alias: codesign, password: changeit'
-        required: false
+    inputs:
+      ENVIRONMENT:
+        description: 'Environment with code-signing secret'
         type: string
+        required: false
   workflow_call:
-    secrets:
-      CODE_SIGNING_KEYSTORE:
-        description: 'Base 64 encoded keystore with code-signing private key. Alias: codesign, password: changeit'
+    inputs:
+      ENVIRONMENT:
+        description: 'Environment with code-signing secret'
+        type: string
         required: false
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    environment: ${{ inputs.ENVIRONMENT }}
     env:
       CODE_SIGNING_KEYSTORE: ${{ secrets.CODE_SIGNING_KEYSTORE }}
     steps:
@@ -43,10 +45,11 @@ jobs:
       run: |
         if [ -n "${CODE_SIGNING_KEYSTORE}" ] ; then
           base64 --decode >signing.keystore <<< "${CODE_SIGNING_KEYSTORE}" || exit 1
-          echo SIGN_ARGUMENT=-Dcode-signing-keystore=signing.keystore>>"$GITHUB_OUTPUT"
+          keytool -list -keystore signing.keystore -storepass changeit || exit 2
+          echo SIGN_ARGUMENT=-Dcode-signing-keystore=\"$(realpath signing.keystore)\">>"$GITHUB_ENV"
         fi
     - name: Build with Tycho
-      run: mvn --batch-mode --threads 2.0C ${SIGN_ARGUMENT} clean verify --file pom.xml
+      run: mvn --batch-mode --threads 2.0C ${SIGN_ARGUMENT} clean verify --file pom.xml -e
     - name: Upload repository
       uses: actions/upload-artifact@v3
       with:

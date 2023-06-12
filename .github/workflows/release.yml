@@ -7,8 +7,8 @@ on:
 jobs:
   build:
     uses: ./.github/workflows/maven.yml
-    secrets:
-      CODE_SIGNING_KEYSTORE: ${{ secrets.CODE_SIGNING_KEYSTORE }}
+    with:
+      ENVIRONMENT: code-signing
   release:
     needs: build
     outputs:
