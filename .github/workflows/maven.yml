@@ -41,8 +41,8 @@ jobs:
         cache: maven
     - name: Read secrets
       run: |
-        if [ -z "${CODE_SIGNING_KEYSTORE}" ] ; then
-          base64 --decode -o signing.keystore <<< "${CODE_SIGNING_KEYSTORE}" || exit 1
+        if [ -n "${CODE_SIGNING_KEYSTORE}" ] ; then
+          base64 --decode >signing.keystore <<< "${CODE_SIGNING_KEYSTORE}" || exit 1
           echo SIGN_ARGUMENT=-Dcode-signing-keystore=signing.keystore>>"$GITHUB_OUTPUT"
         fi
     - name: Build with Tycho
