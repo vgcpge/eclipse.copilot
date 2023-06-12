@@ -42,14 +42,14 @@
 				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>tycho-source-plugin</artifactId>
 				<version>${tycho-version}</version>
-					<executions>
-						<execution>
-							<id>attach-source</id>
-							<goals>
-								<goal>plugin-source</goal>
-							</goals>
-						</execution>
-					</executions>
+				<executions>
+					<execution>
+						<id>attach-source</id>
+						<goals>
+							<goal>plugin-source</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
@@ -83,4 +83,36 @@
 		</plugins>
 	</build>
 
+	<profiles>
+		<profile>
+			<id>sign</id>
+			<activation>
+				<property>
+					<name>code-signing-keystore</name>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-jarsigner-plugin</artifactId>
+						<version>1.2</version>
+						<configuration>
+							<keystore>${code-signing-keystore}</keystore>
+							<storepass>changeit</storepass>
+							<alias>codesign</alias>
+						</configuration>
+						<executions>
+							<execution>
+								<id>sign</id>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
