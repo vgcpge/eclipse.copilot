@@ -78,7 +78,7 @@ public class SafeCloserTest {
 	}
 
 	@SuppressWarnings("resource")
-	@Test
+	@Test(timeout=10000)
 	public void concurrentClosing() throws IOException, InterruptedException, ExecutionException {
 		List<Closeable> resources = Collections.synchronizedList(new ArrayList<Closeable>());
 
