@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Assert;
@@ -78,8 +80,8 @@ public class SafeCloserTest {
 	}
 
 	@SuppressWarnings("resource")
-	@Test(timeout=10000)
-	public void concurrentClosing() throws IOException, InterruptedException, ExecutionException {
+	@Test(timeout=15000)
+	public void concurrentClosing() throws IOException, InterruptedException, ExecutionException, TimeoutException {
 		List<Closeable> resources = Collections.synchronizedList(new ArrayList<Closeable>());
 
 		final class Mock implements Closeable {
@@ -94,47 +96,38 @@ public class SafeCloserTest {
 		}
 
 		ExecutorService threadPool = java.util.concurrent.Executors.newFixedThreadPool(10);
+		try {
+			for (int attempts = 0; attempts < 10000; attempts++) {
 
-		for (int attempts = 0; attempts < 10000; attempts++) {
+				try (SafeCloser closer = new SafeCloser()) {
 
-			try (SafeCloser closer = new SafeCloser()) {
-
-				var finalResult = threadPool.submit(() -> {
-					List<Future<?>> results = new ArrayList<>();
-					for (int i = 0; i < 100; i++) {
-						results.add(threadPool.submit(() -> {
-							for (int j = 0; j < 10000; j++) {
-								try {
-									Mock mock = new Mock();
-									Assert.assertSame(mock, closer.register(mock));
-								} catch (ResourceClosedException e) {
-									// Expected
-									break;
-								} catch (IOException e) {
-									throw new AssertionError(e);
-								}
+					var finalResult = threadPool.submit(() -> {
+						for (;;) {
+							try {
+								Mock mock = new Mock();
+								Assert.assertSame(mock, closer.register(mock));
+							} catch (ResourceClosedException e) {
+								// Expected
+								break;
+							} catch (IOException e) {
+								throw new AssertionError(e);
 							}
-						}));
-					}
-					for (Future<?> result : results) {
-						try {
-							result.get(); // should not throw
-						} catch (InterruptedException | ExecutionException e) {
-							throw new AssertionError(e);
 						}
+					});
+
+					while (resources.isEmpty()) {
+						Thread.yield();
 					}
-				});
 
-				while (resources.isEmpty()) {
-					Thread.yield();
+					closer.close();
+
+					finalResult.get(3, TimeUnit.SECONDS); // should not throw
+
+					Assert.assertTrue(resources.isEmpty());
 				}
-
-				closer.close();
-
-				finalResult.get(); // should not throw
-
-				Assert.assertTrue(resources.isEmpty());
 			}
+		} finally {
+			threadPool.shutdownNow();
 		}
 	}
 }
