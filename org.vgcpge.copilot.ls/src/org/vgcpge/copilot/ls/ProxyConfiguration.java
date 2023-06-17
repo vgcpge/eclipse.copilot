@@ -1,4 +1,7 @@
 package org.vgcpge.copilot.ls;
 
-public record ProxyConfiguration(String host, int port) {
+/**
+ * @param userId, password are optional
+ */
+public record ProxyConfiguration(String host, int port, String userId, String password) {
 }

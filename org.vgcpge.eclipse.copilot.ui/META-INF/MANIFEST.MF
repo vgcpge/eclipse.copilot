@@ -10,6 +10,8 @@ Require-Bundle: org.eclipse.lsp4e;bundle-version="0.15.0",
  org.eclipse.jdt.annotation;bundle-version="1.2.100",
  org.eclipse.lsp4j.jsonrpc,
  org.eclipse.lsp4j,
- org.eclipse.swt
+ org.eclipse.swt,
+ org.eclipse.core.net;bundle-version="1.4.0",
+ org.eclipse.osgi;bundle-version="3.18.300"
 Automatic-Module-Name: org.vgcpge.eclipse.copilot.ui
 Bundle-RequiredExecutionEnvironment: JavaSE-17

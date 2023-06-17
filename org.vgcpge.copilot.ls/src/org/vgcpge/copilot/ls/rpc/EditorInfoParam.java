@@ -32,6 +32,10 @@ import org.eclipse.lsp4j.jsonrpc.validation.NonNull;
  * </pre>
  */
 public class EditorInfoParam {
+	public static final class EditorInfo {
+		public final String name = "VGCPGE Eclipse Copilot";
+		public final String version = "4.28";
+	}
 	public static final class EditorPluginInfo {
 		public final String name = "VGCPGE Eclipse Copilot";
 		public final String version = getVersion();
@@ -64,7 +68,8 @@ public class EditorInfoParam {
 		}
 		
 	}
-	
+	public final EditorInfo editorInfo = new EditorInfo();
+	public final EditorPluginInfo editorPluginInfo = new EditorPluginInfo();
 	public final NetworkProxy networkProxy;
 
 	public EditorInfoParam(Optional<NetworkProxy> networkProxy) {

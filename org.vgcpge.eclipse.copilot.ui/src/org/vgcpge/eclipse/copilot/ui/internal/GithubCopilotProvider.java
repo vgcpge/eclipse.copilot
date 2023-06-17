@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -21,7 +20,6 @@ import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.widgets.Display;
 import org.vgcpge.copilot.ls.LanguageServer;
-import org.vgcpge.copilot.ls.ProxyConfiguration;
 import org.vgcpge.copilot.ls.SafeCloser;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -47,14 +45,12 @@ public final class GithubCopilotProvider implements StreamConnectionProvider {
 	@Override
 	public void start() throws IOException {
 		closer.register(new LanguageServer(closer.register(new OrphanPipedInputStream(output)),
-				closer.register(new PipedOutputStream(input)), executorService, getProxyConfiguration()));
+				closer.register(new PipedOutputStream(input)), executorService, Configuration.getProxyConfiguration()));
 		closer.register(output);
 	}
 
-	private Optional<ProxyConfiguration> getProxyConfiguration() {
-		// TODO Auto-generated method stub
-		return Optional.empty();
-	}
+
+
 
 	@Override
 	public InputStream getInputStream() {
@@ -122,7 +118,7 @@ public final class GithubCopilotProvider implements StreamConnectionProvider {
 //		// Disable new tasks from being submitted
 		pool.shutdown();
 
-		//		
+		//
 //		try {
 //			// Wait a while for existing tasks to terminate
 //			if (!pool.awaitTermination(60, TimeUnit.SECONDS)) {
