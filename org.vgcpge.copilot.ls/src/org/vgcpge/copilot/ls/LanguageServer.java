@@ -81,7 +81,7 @@ public class LanguageServer implements Closeable {
 	
 	private CompletableFuture<Void> configureProxy(CopilotLanguageServer server) {
 		Optional<NetworkProxy> proxyOptional = proxyConfiguration.map(configuration -> {
-			return new NetworkProxy(configuration.host(), configuration.port(), null, null);
+			return new NetworkProxy(configuration.host(), configuration.port(), configuration.userId(), configuration.password(), configuration.rejectUnauthorized());
 		});
 		return server.setEditorInfo(new EditorInfoParam(proxyOptional));		
 	}

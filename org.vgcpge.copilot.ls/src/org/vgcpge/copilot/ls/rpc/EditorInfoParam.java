@@ -57,14 +57,15 @@ public class EditorInfoParam {
 		@NonNull
 		public final String host;
 		public final int port;
-		public final boolean rejectUnauthorized = true;
+		public final boolean rejectUnauthorized;
 		public final String username, password;
-		public NetworkProxy(String host, int port, String username, String password) {
+		public NetworkProxy(String host, int port, String username, String password, boolean rejectUnauthorized) {
 			super();
 			this.host = Objects.requireNonNull(host);
 			this.port = port;
 			this.username = username;
 			this.password = password;
+			this.rejectUnauthorized = rejectUnauthorized;
 		}
 		
 	}

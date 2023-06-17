@@ -40,13 +40,13 @@ final class Configuration {
 		try {
 			IProxyData[] proxy = proxyService.select(COPILOT_BACKEND_URI);
 			return Arrays.stream(proxy).findFirst().map(data -> new ProxyConfiguration(data.getHost(), data.getPort(),
-					data.getUserId(), data.getPassword()));
+					data.getUserId(), data.getPassword(), data.isRequiresAuthentication()));
 		} finally {
 			context.ungetService(reference);
 		}
 	}
 	
-	/** @see  org.eclipse.core.internal.runtime.InternalPlatform.start
+	/** Copied from org.eclipse.core.internal.runtime.InternalPlatform.start()
 	 */
 	private static void start(Bundle bundle) throws BundleException {
 		int originalState = bundle.getState();
