@@ -45,8 +45,7 @@
 				<configuration>
 					<testFailureIgnore>false</testFailureIgnore>
 					<trimStackTrace>false</trimStackTrace>
-					<!-- Kill test JVM if tests take more than 20 minutes to finish -->
-					<forkedProcessTimeoutInSeconds>1500</forkedProcessTimeoutInSeconds>
+					<forkedProcessTimeoutInSeconds>300</forkedProcessTimeoutInSeconds>
 					<showEclipseLog>true</showEclipseLog>
 					<redirectTestOutputToFile>true</redirectTestOutputToFile>
   			</configuration>
