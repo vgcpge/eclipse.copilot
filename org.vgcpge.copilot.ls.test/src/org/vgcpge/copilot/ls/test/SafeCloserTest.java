@@ -2,12 +2,11 @@ package org.vgcpge.copilot.ls.test;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -82,7 +81,7 @@ public class SafeCloserTest {
 	@SuppressWarnings("resource")
 	@Test(timeout=15000)
 	public void concurrentClosing() throws IOException, InterruptedException, ExecutionException, TimeoutException {
-		List<Closeable> resources = Collections.synchronizedList(new ArrayList<Closeable>());
+		Set<Closeable> resources = Collections.synchronizedSet(new HashSet<Closeable>());
 
 		final class Mock implements Closeable {
 			public Mock() {
