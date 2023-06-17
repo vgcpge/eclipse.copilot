@@ -65,6 +65,9 @@ public final class SafeCloser implements Closeable {
 	@Override
 	public void close() throws IOException {
 		synchronized (lock) {
+			if (closed) {
+				return;
+			}
 			closed = true;
 		}
 		closer.close();
