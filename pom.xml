@@ -40,6 +40,18 @@
 			</plugin>
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-surefire-plugin</artifactId>
+				<version>${tycho-version}</version>
+				<configuration>
+					<testFailureIgnore>false</testFailureIgnore>
+					<trimStackTrace>false</trimStackTrace>
+					<forkedProcessTimeoutInSeconds>300</forkedProcessTimeoutInSeconds>
+					<showEclipseLog>true</showEclipseLog>
+					<redirectTestOutputToFile>true</redirectTestOutputToFile>
+  			</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>tycho-source-plugin</artifactId>
 				<version>${tycho-version}</version>
 				<executions>
