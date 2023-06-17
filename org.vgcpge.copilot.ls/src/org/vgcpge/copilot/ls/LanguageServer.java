@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -21,6 +23,8 @@ import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage;
 import org.eclipse.lsp4j.launch.LSPLauncher.Builder;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.vgcpge.copilot.ls.rpc.CopilotLanguageServer;
+import org.vgcpge.copilot.ls.rpc.EditorInfoParam;
+import org.vgcpge.copilot.ls.rpc.EditorInfoParam.NetworkProxy;
 
 import com.google.common.base.Throwables;
 
@@ -30,8 +34,10 @@ public class LanguageServer implements Closeable {
 	}
 
 	private final SafeCloser closer = new SafeCloser();
+	private final Optional<ProxyConfiguration> proxyConfiguration;
 
-	public LanguageServer(InputStream input, OutputStream output, ExecutorService executorService) throws IOException {
+	public LanguageServer(InputStream input, OutputStream output, ExecutorService executorService, Optional<ProxyConfiguration> proxyConfiguration) throws IOException {
+		this.proxyConfiguration = Objects.requireNonNull(proxyConfiguration);
 		try {
 			startProxy(input, output, executorService);
 		} catch (Throwable e) {
@@ -59,7 +65,9 @@ public class LanguageServer implements Closeable {
 			new Authentication(upstreamServerLauncher.getRemoteProxy(), downStreamServer);
 		}, executorService);
 
-		server.getInitialized().whenCompleteAsync((ignored, error2) -> {
+		server.getInitialized()
+		.thenCompose(this::configureProxy)
+		.whenCompleteAsync((ignored, error2) -> {
 			if (error2 == null) {
 				serverIsInitialized.completeExceptionally(error2);
 			} else {
@@ -69,6 +77,13 @@ public class LanguageServer implements Closeable {
 
 		Future<?> listenTask = upstreamServerLauncher.startListening();
 		register(() -> listenTask.cancel(true));
+	}
+	
+	private CompletableFuture<Void> configureProxy(CopilotLanguageServer server) {
+		Optional<NetworkProxy> proxyOptional = proxyConfiguration.map(configuration -> {
+			return new NetworkProxy(configuration.host(), configuration.port(), null, null);
+		});
+		return server.setEditorInfo(new EditorInfoParam(proxyOptional));		
 	}
 
 	private CopilotLanguageServer startDownstreamServer(ExecutorService executorService,
