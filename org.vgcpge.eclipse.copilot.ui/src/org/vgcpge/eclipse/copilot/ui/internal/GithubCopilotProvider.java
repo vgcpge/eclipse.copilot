@@ -45,9 +45,12 @@ public final class GithubCopilotProvider implements StreamConnectionProvider {
 	@Override
 	public void start() throws IOException {
 		closer.register(new LanguageServer(closer.register(new OrphanPipedInputStream(output)),
-				closer.register(new PipedOutputStream(input)), executorService));
+				closer.register(new PipedOutputStream(input)), executorService, Configuration.getProxyConfiguration()));
 		closer.register(output);
 	}
+
+
+
 
 	@Override
 	public InputStream getInputStream() {
@@ -115,7 +118,7 @@ public final class GithubCopilotProvider implements StreamConnectionProvider {
 //		// Disable new tasks from being submitted
 		pool.shutdown();
 
-		//		
+		//
 //		try {
 //			// Wait a while for existing tasks to terminate
 //			if (!pool.awaitTermination(60, TimeUnit.SECONDS)) {
