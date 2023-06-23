@@ -48,7 +48,7 @@ jobs:
           echo SIGN_ARGUMENT=-Dcode-signing-keystore=\"$(realpath signing.keystore)\">>"$GITHUB_ENV"
         fi
     - name: Build with Tycho
-      run: mvn --batch-mode --threads 2.0C ${SIGN_ARGUMENT} clean verify --file pom.xml -e
+      run: mvn --batch-mode -Dtycho.disableP2Mirrors=true --threads 2.0C ${SIGN_ARGUMENT} clean verify --file pom.xml -e
     - name: Upload repository
       uses: actions/upload-artifact@v3
       with:
