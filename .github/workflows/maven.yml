@@ -14,25 +14,11 @@ on:
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
-    inputs:
-      ENVIRONMENT:
-        description: 'Environment with code-signing secret'
-        type: string
-        required: false
-  workflow_call:
-    inputs:
-      ENVIRONMENT:
-        description: 'Environment with code-signing secret'
-        type: string
-        required: false
 
 jobs:
   build:
     timeout-minutes: 5
     runs-on: ubuntu-latest
-    environment: ${{ inputs.ENVIRONMENT }}
-    env:
-      CODE_SIGNING_KEYSTORE: ${{ secrets.CODE_SIGNING_KEYSTORE }}
     steps:
     - uses: actions/checkout@v3
     - name: Set up JDK 17
@@ -41,15 +27,8 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: maven
-    - name: Read secrets
-      run: |
-        if [ -n "${CODE_SIGNING_KEYSTORE}" ] ; then
-          base64 --decode >signing.keystore <<< "${CODE_SIGNING_KEYSTORE}" || exit 1
-          keytool -list -keystore signing.keystore -storepass changeit || exit 2
-          echo SIGN_ARGUMENT=-Dcode-signing-keystore=\"$(realpath signing.keystore)\">>"$GITHUB_ENV"
-        fi
     - name: Build with Tycho
-      run: mvn --batch-mode --threads 2.0C ${SIGN_ARGUMENT} clean verify --file pom.xml -e
+      run: mvn --batch-mode --threads 2.0C clean verify --file pom.xml -e
     - name: Upload repository
       uses: actions/upload-artifact@v3
       with:

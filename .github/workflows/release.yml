@@ -1,18 +1,12 @@
 name: Release
 on:
   push:
-    branches: [ "release" ]
+    branches: [ "test_release" ]
   workflow_dispatch:
 
 jobs:
   build:
-    uses: ./.github/workflows/maven.yml
-    with:
-      ENVIRONMENT: code-signing
-  release:
-    needs: build
-    outputs:
-      VERSION: ${{ steps.versionReader.outputs.VERSION }}
+    environment: code-signing
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -24,17 +18,22 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: maven
-    - run: echo VERSION=$(python3 repository/releng/bump_patch_version.py current_version)>>"$GITHUB_OUTPUT"
-      id: versionReader
+    - run: base64 --decode >signing.keystore <<< "${{ secrets.CODE_SIGNING_KEYSTORE }}"
+    - run: keytool -list -keystore signing.keystore -storepass changeit
+    - name: Build with Tycho
+      run: mvn --batch-mode -Dtycho.disableP2Mirrors=true -Dcode-signing-keystore=\"$(realpath signing.keystore)\" clean verify --file pom.xml -e
+    - run: rm signing.keystore
+    - name: Upload repository
+      uses: actions/upload-artifact@v3
+      with:
+        name: repository
+        path: 'repository/target/repository/'
+    - uses: actions/upload-pages-artifact@v1
+      with:
+        path: './repository/target/repository/'
+    - id: versionReader
+      run: echo VERSION=$(python3 repository/releng/bump_patch_version.py current_version)>>"$GITHUB_OUTPUT"
     - run: echo Version:${{ steps.versionReader.outputs.VERSION }}
-    - name: Create Github Release
-      id: create_release
-      uses: softprops/action-gh-release@v1
-      with: 
-          tag_name: releases/${{ steps.versionReader.outputs.VERSION }}
-          name: ${{ steps.versionReader.outputs.VERSION }}
-          draft: true
-          prerelease: false
     - run: python3 repository/releng/bump_patch_version.py bump
     - run: echo VERSION=$(python3 repository/releng/bump_patch_version.py current_version)>>"$GITHUB_OUTPUT"
       id: versionAfter
@@ -42,32 +41,18 @@ jobs:
       uses: EndBug/add-and-commit@v9.1.3
       with:
         message: "Version ${{ steps.versionAfter.outputs.VERSION }}"
-  upload:
-    needs: release
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-    - uses: actions/download-artifact@v3
-      id: download
-      with:
-        name: repository
-        path: repository
-    - run: ls -l
-    - run: ls -ld ${{steps.download.outputs.download-path}}
-    - run: cd repository && zip -r ../repository.zip .
-    - name: Upload release artifact
-      id: create_release
+    - run: cd repository/target/repository/ && zip -r ../../../repository.zip .
+    - name: Create release ${{ needs.build.outputs.VERSION }}
       uses: softprops/action-gh-release@v1
-      with:
-          tag_name: releases/${{ needs.release.outputs.VERSION }}
-          name: ${{ needs.release.outputs.VERSION }}
+      with: 
+          tag_name: releases/${{ steps.versionReader.outputs.VERSION }}
+          name: ${{ steps.versionReader.outputs.VERSION }}
+          target_commitish: ${{ github.sha }}
           files: './repository.zip'
-    - uses: actions/upload-pages-artifact@v1
-      with:
-        path: './repository/'
+          draft: true
+          prerelease: false          
   deploy:
-    needs: upload
+    needs: build
     runs-on: ubuntu-latest
     # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
     permissions:
