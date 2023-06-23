@@ -19,7 +19,7 @@ Copilot is a cloud-based service provided by Github and only works with [a paid 
 # Usage
 - Copy the link to update site: https://vgcpge.github.io/eclipse.copilot/
 - Follow [instructions](https://help.eclipse.org/latest/topic/org.eclipse.platform.doc.user/tasks/tasks-124.htm) to install the Copilot feature from the update site.
-- A warning dialog "Trust" will request a confirmation to install unsigned content. Install on your own risk and consider gifting me a code-signing certificate.
+- Warning dialogs "Trust Authorities" and "Trust Artifacts" will request confirmations. Install on your own risk and consider gifting me a code-signing certificate.
 - Hit <kbd>Ctrl+Space</kbd> for [content-assist](https://www.tutorialspoint.com/eclipse/eclipse_content_assist.htm) in ["Generic Text Editor"](https://projects.eclipse.org/projects/technology.tm4e) or ["Java Editor"](https://www.eclipse.org/jdt/) (requires [Java support](#java) to be installed separately). Any other editor suporting the standard APIs will work too (notably, "Text Editor" does not support content-assist).
 - When editing a text file (any source code file counts) for the first time, plug-in will request permission to access Github Copilot in your default web browser. An error will be shown if you don't have Copilot subscription.
 - A modal dialog will be shown with a code to supply in the browser. Once granted, permission is remembered by Copilot, this is a one-time operation.
