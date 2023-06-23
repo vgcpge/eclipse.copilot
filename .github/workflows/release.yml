@@ -1,7 +1,7 @@
 name: Release
 on:
   push:
-    branches: [ "test_release" ]
+    branches: [ "release" ]
   workflow_dispatch:
 
 jobs:
@@ -49,7 +49,7 @@ jobs:
           name: ${{ steps.versionReader.outputs.VERSION }}
           target_commitish: ${{ github.sha }}
           files: './repository.zip'
-          draft: true
+          draft: false
           prerelease: false          
   deploy:
     needs: build

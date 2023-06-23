@@ -35,3 +35,4 @@ feature.xml.takari_issue_192
 .polyglot.META-INF
 .polyglot.feature.xml
 .vscode/launch.json
+*.keystore
