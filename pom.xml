@@ -6,7 +6,7 @@
 
 	<groupId>org.vgcpge.eclipse.copilot</groupId>
 	<artifactId>parent</artifactId>
-	<version>0.0.12-SNAPSHOT</version>
+	<version>0.0.13-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<properties>
