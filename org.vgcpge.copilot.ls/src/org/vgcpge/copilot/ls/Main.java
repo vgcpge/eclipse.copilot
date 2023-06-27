@@ -10,7 +10,9 @@ public class Main {
 
 	public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
 		ExecutorService executorService = Executors.newCachedThreadPool();
-		try (LanguageServer languageServer = new LanguageServer(new IOStreams(System.in, System.out), CopilotLocator.start(System.err::println), executorService, Optional.empty())) {
+		var locator = new CopilotLocator(System.err::println);
+		try (LanguageServer languageServer = new LanguageServer(new IOStreams(System.in, System.out), locator.start(),
+				executorService, Optional.empty())) {
 		} finally {
 			executorService.shutdown();
 		}

@@ -29,6 +29,7 @@ public class LanguageClientDecorator extends DelegatingLanguageClient {
 		super.logMessage(messageParams);
 	}
 	
+	@SuppressWarnings("unused")
 	@JsonNotification
 	public void statusNotification(Object status, Object message) {
 		

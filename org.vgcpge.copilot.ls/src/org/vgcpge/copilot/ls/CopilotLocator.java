@@ -2,18 +2,17 @@ package org.vgcpge.copilot.ls;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import org.eclipse.lsp4j.MessageParams;
-import org.eclipse.lsp4j.MessageType;
 
 import com.google.common.base.Joiner;
 
@@ -24,22 +23,45 @@ public class CopilotLocator {
 			"dist", "agent.js");
 	private static final List<Path> NODE_PATH_CANDIDATES = List.of(Paths.get("/opt/homebrew/bin/node"));
 
-	public CopilotLocator() {
+	private final Consumer<String> log;
+	private Path nodeLocation = null;
+	public CopilotLocator(Consumer<String> log) {
 		super();
+		this.log = Objects.requireNonNull(log);
 	}
 
-	public static List<String> copilotStartCommand() {
+	public List<String> copilotStartCommand() {
 		return List.of(findNode(), findAgent().toString());
 	}
 	
-	public static IOStreams start(Consumer<String> log) throws IOException {
-		List<String> command = CopilotLocator.copilotStartCommand();
+	public IOStreams start() throws IOException {
+		List<String> command = copilotStartCommand();
 		String publicCommand = command.stream().map(CopilotLocator::privacyFilter).collect(Collectors.joining(" "));
 		log.accept("Starting: " + publicCommand);
 		return new CommandStreams(command).streams();
 	}
+	
+	public void setNodeJs(String location) {
+		Path path = Paths.get(location);
+		if (!Files.isExecutable(path)) {
+			throw new IllegalArgumentException(location + " is not executable");
+		}
+		try {
+			if (!isValidNode(path.toString())) {
+				throw new IllegalArgumentException(location + " is not a valid Node.js executable");
+			}
+		} catch (Exception e ) { 
+			throw new IllegalArgumentException(location + " is not a valid Node.js executable", e);
+		
+		}
+		nodeLocation = path;
+	}
 
-	private static String findNode() {
+
+	private String findNode() {
+		if (nodeLocation != null) {
+			return nodeLocation.toString();
+		}
 		List<String> testedLocations = new ArrayList<>();
 		try {
 
@@ -71,14 +93,31 @@ public class CopilotLocator {
 		}
 	}
 
-	private static boolean isValidNode(String nodeCommand) throws InterruptedException, IOException {
+	private boolean isValidNode(String nodeCommand) throws InterruptedException, IOException {
 		ProcessBuilder builder = new ProcessBuilder(nodeCommand, "--version");
+		builder.redirectError(Redirect.DISCARD);
 
 		Process process = builder.start();
+		process.getOutputStream().close();
+		String version;
+		try (InputStream s = process.getInputStream()) {
+			version = readAll(s).trim();
+		}
 		try {
-			return process.waitFor() == 0;
+			boolean result = process.waitFor() == 0;
+			if (result) {
+				log.accept("Node.js location: " + privacyFilter(nodeCommand) + ". Version: " + version);
+			}
+			return result;
 		} finally {
 			process.destroyForcibly();
+		}
+	}
+	
+	private static String readAll(InputStream input) { 
+		try (Scanner s = new Scanner(input, StandardCharsets.UTF_8)) {
+			s.useDelimiter("\\A");
+			return s.hasNext() ? s.next() : "";
 		}
 	}
 

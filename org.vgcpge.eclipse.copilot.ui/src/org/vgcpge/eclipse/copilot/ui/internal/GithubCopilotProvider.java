@@ -53,7 +53,9 @@ public final class GithubCopilotProvider implements StreamConnectionProvider {
 		IOStreams upstream = new IOStreams( //
 				closer.register(new OrphanPipedInputStream(output)), //
 				closer.register(new PipedOutputStream(input)));
-		closer.register(new LanguageServer(upstream, CopilotLocator.start(LOG::info), executorService, Configuration.getProxyConfiguration()));
+		CopilotLocator locator = new CopilotLocator(LOG::info);
+		Configuration.findNodeJs().ifPresent(locator::setNodeJs);
+		closer.register(new LanguageServer(upstream, locator.start(), executorService, Configuration.getProxyConfiguration()));
 		closer.register(output);
 	}
 
@@ -139,4 +141,5 @@ public final class GithubCopilotProvider implements StreamConnectionProvider {
 //			Thread.currentThread().interrupt();
 //		}
 	}
+
 }

@@ -36,6 +36,8 @@ public class LanguageServer implements Closeable {
 		this.downstream = Objects.requireNonNull(downstream);
 		this.proxyConfiguration = Objects.requireNonNull(proxyConfiguration);
 		try {
+			register(downstream);
+			register(upstream);
 			startProxy(upstream, executorService);
 		} catch (Throwable e) {
 			closer.close();
@@ -127,6 +129,12 @@ public class LanguageServer implements Closeable {
 			}
 		});
 		return closeable;
+	}
+	
+	@SuppressWarnings("resource")
+	private void register(IOStreams iostreams) throws IOException {
+		closer.register(iostreams.input());
+		closer.register(iostreams.output());
 	}
 
 	@Override

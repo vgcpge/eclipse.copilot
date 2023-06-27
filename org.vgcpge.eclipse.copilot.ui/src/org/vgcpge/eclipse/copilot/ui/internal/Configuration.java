@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
+import org.eclipse.wildwebdeveloper.embedder.node.NodeJSManager;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -18,13 +19,17 @@ final class Configuration {
 	private static final URI COPILOT_BACKEND_URI = URI
 			.create("https://copilot-proxy.githubusercontent.com/v1/engines/copilot-codex/completions");
 
-	public static Optional<ProxyConfiguration> getProxyConfiguration() throws IOException {
-		Bundle bundle = FrameworkUtil.getBundle(GithubCopilotProvider.class);
+	public static Optional<String> findNodeJs() throws IOException {
 		try {
-			start(bundle);
-		} catch (BundleException e) {
-			throw new IOException(e);
+			return Optional.of(NodeJSManager.getNodeJsLocation().toString());
+		} catch (NoClassDefFoundError e) {
+			// NoClassDefFoundError happens when optional dependency is not installed
+			return Optional.empty();
 		}
+	}
+
+	public static Optional<ProxyConfiguration> getProxyConfiguration() throws IOException {
+		Bundle bundle = startThisBundle();
 		BundleContext context = bundle.getBundleContext();
 		if (context == null) {
 			return Optional.empty();
@@ -45,8 +50,19 @@ final class Configuration {
 			context.ungetService(reference);
 		}
 	}
-	
-	/** Copied from org.eclipse.core.internal.runtime.InternalPlatform.start()
+
+	private static Bundle startThisBundle() throws IOException {
+		Bundle bundle = FrameworkUtil.getBundle(GithubCopilotProvider.class);
+		try {
+			start(bundle);
+		} catch (BundleException e) {
+			throw new IOException(e);
+		}
+		return bundle;
+	}
+
+	/**
+	 * Copied from org.eclipse.core.internal.runtime.InternalPlatform.start()
 	 */
 	private static void start(Bundle bundle) throws BundleException {
 		int originalState = bundle.getState();
