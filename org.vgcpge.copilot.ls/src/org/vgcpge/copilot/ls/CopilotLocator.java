@@ -1,11 +1,19 @@
 package org.vgcpge.copilot.ls;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+import org.eclipse.lsp4j.MessageParams;
+import org.eclipse.lsp4j.MessageType;
 
 import com.google.common.base.Joiner;
 
@@ -22,6 +30,13 @@ public class CopilotLocator {
 
 	public static List<String> copilotStartCommand() {
 		return List.of(findNode(), findAgent().toString());
+	}
+	
+	public static IOStreams start(Consumer<String> log) throws IOException {
+		List<String> command = CopilotLocator.copilotStartCommand();
+		String publicCommand = command.stream().map(CopilotLocator::privacyFilter).collect(Collectors.joining(" "));
+		log.accept("Starting: " + publicCommand);
+		return new CommandStreams(command).streams();
 	}
 
 	private static String findNode() {

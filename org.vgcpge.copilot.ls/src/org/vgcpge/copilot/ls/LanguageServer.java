@@ -4,8 +4,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.ProcessBuilder.Redirect;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -13,10 +11,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
-import org.eclipse.lsp4j.MessageParams;
-import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage;
@@ -35,18 +30,20 @@ public class LanguageServer implements Closeable {
 
 	private final SafeCloser closer = new SafeCloser();
 	private final Optional<ProxyConfiguration> proxyConfiguration;
+	private final IOStreams downstream;
 
-	public LanguageServer(InputStream input, OutputStream output, ExecutorService executorService, Optional<ProxyConfiguration> proxyConfiguration) throws IOException {
+	public LanguageServer(IOStreams upstream, IOStreams downstream, ExecutorService executorService, Optional<ProxyConfiguration> proxyConfiguration) throws IOException {
+		this.downstream = Objects.requireNonNull(downstream);
 		this.proxyConfiguration = Objects.requireNonNull(proxyConfiguration);
 		try {
-			startProxy(input, output, executorService);
+			startProxy(upstream, executorService);
 		} catch (Throwable e) {
 			closer.close();
 			throw e;
 		}
 	}
 
-	private void startProxy(InputStream input, OutputStream output, ExecutorService executorService)
+	private void startProxy(IOStreams upstream, ExecutorService executorService)
 			throws IOException {
 		CompletableFuture<LanguageClient> upstreamClient = new CompletableFuture<>();
 		CompletableFuture<Void> serverIsInitialized = new CompletableFuture<Void>();
@@ -56,6 +53,11 @@ public class LanguageServer implements Closeable {
 		LanguageServerDecorator server = new LanguageServerDecorator(
 				() -> startDownstreamServer(executorService, client));
 
+		@SuppressWarnings("resource")
+		InputStream input = closer.register(upstream.input());
+		@SuppressWarnings("resource")
+		OutputStream output = closer.register(upstream.output());
+		
 		Launcher<LanguageClient> upstreamServerLauncher = new Builder<LanguageClient>()
 				.setExecutorService(executorService).setLocalService(server).setRemoteInterface(LanguageClient.class)
 				.setInput(input).setOutput(output).create();
@@ -88,19 +90,12 @@ public class LanguageServer implements Closeable {
 
 	private CopilotLanguageServer startDownstreamServer(ExecutorService executorService,
 			LanguageClientDecorator client) {
-		Process copilotProcess;
 		CopilotLanguageServer downStreamServer;
 		try {
-			List<String> command = CopilotLocator.copilotStartCommand();
-			String publicCommand = command.stream().map(CopilotLocator::privacyFilter).collect(Collectors.joining(" "));
-			client.logMessage(new MessageParams(MessageType.Info, "Starting " + publicCommand));
-			copilotProcess = new ProcessBuilder(command).redirectError(Redirect.INHERIT).start();
-			register(copilotProcess::destroy);
-
 			@SuppressWarnings("resource")
-			OutputStream output = closer.register(copilotProcess.getOutputStream());
+			OutputStream output = closer.register(downstream.output());
 			@SuppressWarnings("resource")
-			InputStream input = closer.register(copilotProcess.getInputStream());
+			InputStream input = closer.register(downstream.input());
 			Launcher<CopilotLanguageServer> downstreamClientLauncher = new Builder<CopilotLanguageServer>()
 					.setExecutorService(executorService).setLocalService(client)
 					.setRemoteInterface(CopilotLanguageServer.class).setInput(input).wrapMessages(this::wrapMessages)
