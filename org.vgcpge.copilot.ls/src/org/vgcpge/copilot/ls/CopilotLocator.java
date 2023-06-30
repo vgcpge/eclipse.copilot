@@ -10,9 +10,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.base.Joiner;
 
@@ -25,6 +27,7 @@ public class CopilotLocator {
 
 	private final Consumer<String> log;
 	private Path nodeLocation = null;
+
 	public CopilotLocator(Consumer<String> log) {
 		super();
 		this.log = Objects.requireNonNull(log);
@@ -33,14 +36,14 @@ public class CopilotLocator {
 	public List<String> copilotStartCommand() {
 		return List.of(findNode(), findAgent().toString());
 	}
-	
+
 	public IOStreams start() throws IOException {
 		List<String> command = copilotStartCommand();
 		String publicCommand = command.stream().map(CopilotLocator::privacyFilter).collect(Collectors.joining(" "));
 		log.accept("Starting: " + publicCommand);
 		return new CommandStreams(command).streams();
 	}
-	
+
 	public void setNodeJs(String location) {
 		Path path = Paths.get(location);
 		if (!Files.isExecutable(path)) {
@@ -50,47 +53,27 @@ public class CopilotLocator {
 			if (!isValidNode(path.toString())) {
 				throw new IllegalArgumentException(location + " is not a valid Node.js executable");
 			}
-		} catch (Exception e ) { 
+		} catch (Exception e) {
 			throw new IllegalArgumentException(location + " is not a valid Node.js executable", e);
-		
+
 		}
 		nodeLocation = path;
 	}
 
+	public Stream<Path> availableNodeExecutables() {
+		return commandCandidates().map(this::nodeCommandToPath).flatMap(Optional::stream);
+	}
+
+	private Stream<String> commandCandidates() {
+		return Stream.concat(Stream.of("node"), NODE_PATH_CANDIDATES.stream()).map(Object::toString);
+	}
 
 	private String findNode() {
 		if (nodeLocation != null) {
 			return nodeLocation.toString();
 		}
-		List<String> testedLocations = new ArrayList<>();
-		try {
-
-			try {
-				String simpleCommand = "node";
-				testedLocations.add(simpleCommand);
-				if (isValidNode(simpleCommand)) {
-					return simpleCommand;
-				}
-			} catch (IOException e) {
-				// No PATH
-			}
-			for (Path path : NODE_PATH_CANDIDATES) {
-				testedLocations.add(privacyFilter(path.toString()));
-				if (Files.isExecutable(path)) {
-					try {
-						if (isValidNode(path.toString())) {
-							return path.toString();
-						}
-					} catch (IOException e) {
-						throw new IllegalStateException(e);
-					}
-				}
-			}
-			throw new IllegalStateException(String.format(NO_NODE_TEMPLATE, Joiner.on("\n").join(testedLocations)));
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new IllegalStateException(e);
-		}
+		return availableNodeExecutables().findFirst().map(Path::toString).orElseThrow(() -> new IllegalStateException(
+				String.format(NO_NODE_TEMPLATE, commandCandidates().collect(Collectors.joining("\n")))));
 	}
 
 	private boolean isValidNode(String nodeCommand) throws InterruptedException, IOException {
@@ -113,8 +96,8 @@ public class CopilotLocator {
 			process.destroyForcibly();
 		}
 	}
-	
-	private static String readAll(InputStream input) { 
+
+	private static String readAll(InputStream input) {
 		try (Scanner s = new Scanner(input, StandardCharsets.UTF_8)) {
 			s.useDelimiter("\\A");
 			return s.hasNext() ? s.next() : "";
@@ -151,4 +134,47 @@ public class CopilotLocator {
 		}
 		return data;
 	}
+
+	private Optional<Path> nodeCommandToPath(String command) {
+		ProcessBuilder pb = new ProcessBuilder(command, "--eval", "console.log(process.execPath)");
+		pb.redirectError(Redirect.PIPE);
+		Process process;
+		try {
+			try {
+				process = pb.start();
+			} catch (IOException e) {
+				// Cannot run program "node"
+				return Optional.empty();
+			}
+			try {
+				process.getOutputStream().close();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			Path result;
+			try (InputStream inputStream = process.getInputStream()) {
+				result = Path.of(readAll(inputStream).trim());
+			}
+			String error;
+			try (InputStream inputStream = process.getErrorStream()) {
+				error = readAll(inputStream).trim();
+			}
+
+			if (process.waitFor() != 0) {
+				log.accept("Failed to run " + command + ":\n" + error);
+				return Optional.empty();
+			}
+			if (!Files.isExecutable(result)) {
+				log.accept("Not an executable: " + result);
+				return Optional.empty();
+			}
+			return Optional.of(result);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			return Optional.empty();
+		}
+	}
+
 }

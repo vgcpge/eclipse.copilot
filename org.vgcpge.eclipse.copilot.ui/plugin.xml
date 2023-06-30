@@ -18,5 +18,19 @@
             id="org.vgcpge.eclipse.copilot.ui.copilot">
       </contentTypeMapping>
    </extension>
+   <extension
+         point="org.eclipse.equinox.preferences.preferences">
+      <initializer
+            class="org.vgcpge.eclipse.copilot.ui.internal.PreferenceInitializer">
+      </initializer>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="org.vgcpge.eclipse.copilot.ui.internal.PreferencePage"
+            id="org.vgcpge.eclipse.copilot.ui.page1"
+            name="Copilot">
+      </page>
+   </extension>
 
 </plugin>

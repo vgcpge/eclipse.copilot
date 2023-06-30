@@ -7,7 +7,9 @@ import java.util.Optional;
 
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
-import org.eclipse.wildwebdeveloper.embedder.node.NodeJSManager;
+import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -18,14 +20,16 @@ import org.vgcpge.copilot.ls.ProxyConfiguration;
 final class Configuration {
 	private static final URI COPILOT_BACKEND_URI = URI
 			.create("https://copilot-proxy.githubusercontent.com/v1/engines/copilot-codex/completions");
+	private static final IPreferenceStore PREFERENCE_STORE = new ScopedPreferenceStore(InstanceScope.INSTANCE,
+			FrameworkUtil.getBundle(Configuration.class).getSymbolicName());
+	public static final String NODE_JS_EXECUTABLE_KEY = "node_js_executable";
 
 	public static Optional<String> findNodeJs() throws IOException {
-		try {
-			return Optional.of(NodeJSManager.getNodeJsLocation().toString());
-		} catch (NoClassDefFoundError e) {
-			// NoClassDefFoundError happens when optional dependency is not installed
-			return Optional.empty();
-		}
+		return Optional.of(preferenceStore().getString(NODE_JS_EXECUTABLE_KEY));
+	}
+	
+	public static IPreferenceStore preferenceStore() {
+		return PREFERENCE_STORE;
 	}
 
 	public static Optional<ProxyConfiguration> getProxyConfiguration() throws IOException {
@@ -79,4 +83,5 @@ final class Configuration {
 			throw e;
 		}
 	}
+
 }
