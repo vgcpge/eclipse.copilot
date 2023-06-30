@@ -27,6 +27,7 @@
    <extension
          point="org.eclipse.ui.preferencePages">
       <page
+            category="org.eclipse.lsp4e.preferences"
             class="org.vgcpge.eclipse.copilot.ui.internal.PreferencePage"
             id="org.vgcpge.eclipse.copilot.ui.page1"
             name="Copilot">
