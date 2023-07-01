@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -104,7 +105,7 @@ public class LanguageServer implements Closeable {
 					.setOutput(output).create();
 			downStreamServer = downstreamClientLauncher.getRemoteProxy();
 			Future<Void> listenTask = downstreamClientLauncher.startListening();
-			register(() -> listenTask.get());
+			register(() -> listenTask.get(2, TimeUnit.SECONDS));
 		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}

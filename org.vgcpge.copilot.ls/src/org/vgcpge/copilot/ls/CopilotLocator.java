@@ -27,6 +27,7 @@ public class CopilotLocator {
 
 	private final Consumer<String> log;
 	private Path nodeLocation = null;
+	private Path agentLocation = null;
 
 	public CopilotLocator(Consumer<String> log) {
 		super();
@@ -44,6 +45,7 @@ public class CopilotLocator {
 		return new CommandStreams(command).streams();
 	}
 
+	/** Force use of a given Node.js executable. Disable autodetect. */
 	public void setNodeJs(String location) {
 		Path path = Paths.get(location);
 		if (!Files.isExecutable(path)) {
@@ -58,6 +60,33 @@ public class CopilotLocator {
 
 		}
 		nodeLocation = path;
+	}
+	
+	/** Force use of a given Copilot agent. Disable autodetect.
+	 * @param agentJsPath - a path to JavaScript entrypoint. Usually named agent.js.
+	 */
+	public void setAgentJs(String agentJsPath) {
+		Path path = Paths.get(agentJsPath);
+		if (!Files.isRegularFile(path)) {
+			throw new IllegalArgumentException(agentJsPath + " is not a file");
+		}
+		if (!agentJsPath.endsWith(".js")) {
+			throw new IllegalArgumentException(agentJsPath + " is not a JavaScript file");
+		}
+		if (!Files.isReadable(path)) {
+			throw new IllegalArgumentException(agentJsPath + " is not readable");
+		}
+		agentLocation = path;
+	}
+	
+	private final List<String> testedAgentLocations = new ArrayList<>();
+	public Stream<Path> availableAgents() {
+		testedAgentLocations.clear();
+		return configurationLocations().stream() //
+				.map(location -> location.resolve(NVIM_RELATIVE_PATH)) //
+				.peek(path -> testedAgentLocations.add(privacyFilter(path.toString()))) //
+				.filter(Files::isRegularFile) //
+				.filter(Files::isReadable);
 	}
 
 	public Stream<Path> availableNodeExecutables() {
@@ -104,16 +133,14 @@ public class CopilotLocator {
 		}
 	}
 
-	private static Path findAgent() {
-		List<String> testedLocations = new ArrayList<>();
-		return configurationLocations().stream() //
-				.map(location -> location.resolve(NVIM_RELATIVE_PATH)) //
-				.peek(path -> testedLocations.add(privacyFilter(path.toString()))) //
-				.filter(Files::isRegularFile) //
-				.filter(Files::isReadable) //
+	private Path findAgent() {
+		if (agentLocation != null) {
+			return agentLocation;
+		}
+ 		return availableAgents()
 				.findFirst() //
 				.orElseThrow(() -> new IllegalStateException(
-						String.format(NO_COPILOT_TEMPLATE, Joiner.on("\n").join(testedLocations))));
+						String.format(NO_COPILOT_TEMPLATE, Joiner.on("\n").join(testedAgentLocations))));
 	}
 
 	private static List<Path> configurationLocations() {

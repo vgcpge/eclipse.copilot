@@ -21,12 +21,14 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	@Override
 	public void initializeDefaultPreferences() {
 		IPreferenceStore preferenceStore = Configuration.preferenceStore();
-		String detected = availableNodeJsExcutables().findFirst().get().toString();
+		CopilotLocator locator = new CopilotLocator(LOG::warn);
+		String detected = availableNodeJsExcutables(locator).findFirst().get().toString();
 		preferenceStore.setDefault(Configuration.NODE_JS_EXECUTABLE_KEY, detected);
+		detected = locator.availableAgents().findFirst().get().toString();
+		preferenceStore.setDefault(Configuration.AGENT_JS_KEY, detected);
 	}
 
-	public Stream<Path> availableNodeJsExcutables() {
-		CopilotLocator locator = new CopilotLocator(LOG::warn);
+	public Stream<Path> availableNodeJsExcutables(CopilotLocator locator) {
 		Stream<Path> fromLib = locator.availableNodeExecutables();
 		// Lazy, as Wild Web produces a side effect when called - unpacks embedded instance
 		Stream<Path> fromWildWeb = lazy(PreferenceInitializer::findWildWebNodeJs);

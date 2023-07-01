@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.annotation.Nullable;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.lsp4e.server.StreamConnectionProvider;
 import org.eclipse.lsp4j.ShowMessageRequestParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Message;
@@ -54,7 +55,9 @@ public final class GithubCopilotProvider implements StreamConnectionProvider {
 				closer.register(new OrphanPipedInputStream(output)), //
 				closer.register(new PipedOutputStream(input)));
 		CopilotLocator locator = new CopilotLocator(LOG::info);
-		Configuration.findNodeJs().ifPresent(locator::setNodeJs);
+		IPreferenceStore preferenceStore = Configuration.preferenceStore();
+		locator.setNodeJs(preferenceStore.getString(Configuration.NODE_JS_EXECUTABLE_KEY));
+		locator.setAgentJs(preferenceStore.getString(Configuration.AGENT_JS_KEY));
 		closer.register(new LanguageServer(upstream, locator.start(), executorService, Configuration.getProxyConfiguration()));
 		closer.register(output);
 	}

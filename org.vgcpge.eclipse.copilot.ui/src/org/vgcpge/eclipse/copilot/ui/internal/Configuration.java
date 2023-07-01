@@ -23,11 +23,8 @@ final class Configuration {
 	private static final IPreferenceStore PREFERENCE_STORE = new ScopedPreferenceStore(InstanceScope.INSTANCE,
 			FrameworkUtil.getBundle(Configuration.class).getSymbolicName());
 	public static final String NODE_JS_EXECUTABLE_KEY = "node_js_executable";
+	public static final String AGENT_JS_KEY = "copilot_agent_js";
 
-	public static Optional<String> findNodeJs() throws IOException {
-		return Optional.of(preferenceStore().getString(NODE_JS_EXECUTABLE_KEY));
-	}
-	
 	public static IPreferenceStore preferenceStore() {
 		return PREFERENCE_STORE;
 	}
