@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,8 +62,10 @@ public class CopilotLocator {
 		}
 		nodeLocation = path;
 	}
-	
-	/** Force use of a given Copilot agent. Disable autodetect.
+
+	/**
+	 * Force use of a given Copilot agent. Disable autodetect.
+	 * 
 	 * @param agentJsPath - a path to JavaScript entrypoint. Usually named agent.js.
 	 */
 	public void setAgentJs(String agentJsPath) {
@@ -78,8 +81,9 @@ public class CopilotLocator {
 		}
 		agentLocation = path;
 	}
-	
+
 	private final List<String> testedAgentLocations = new ArrayList<>();
+
 	public Stream<Path> availableAgents() {
 		testedAgentLocations.clear();
 		return configurationLocations().stream() //
@@ -106,24 +110,11 @@ public class CopilotLocator {
 	}
 
 	private boolean isValidNode(String nodeCommand) throws InterruptedException, IOException {
-		ProcessBuilder builder = new ProcessBuilder(nodeCommand, "--version");
-		builder.redirectError(Redirect.DISCARD);
-
-		Process process = builder.start();
-		process.getOutputStream().close();
-		String version;
-		try (InputStream s = process.getInputStream()) {
-			version = readAll(s).trim();
-		}
-		try {
-			boolean result = process.waitFor() == 0;
-			if (result) {
-				log.accept("Node.js location: " + privacyFilter(nodeCommand) + ". Version: " + version);
-			}
-			return result;
-		} finally {
-			process.destroyForcibly();
-		}
+		Optional<String> result = checkOutput(List.of(nodeCommand, "--version")).filter(Predicate.not(String::isEmpty));
+		result.ifPresent(version -> {
+			log.accept("Node.js location: " + privacyFilter(nodeCommand) + ". Version: " + version);
+		});
+		return result.isPresent();
 	}
 
 	private static String readAll(InputStream input) {
@@ -137,8 +128,7 @@ public class CopilotLocator {
 		if (agentLocation != null) {
 			return agentLocation;
 		}
- 		return availableAgents()
-				.findFirst() //
+		return availableAgents().findFirst() //
 				.orElseThrow(() -> new IllegalStateException(
 						String.format(NO_COPILOT_TEMPLATE, Joiner.on("\n").join(testedAgentLocations))));
 	}
@@ -163,7 +153,17 @@ public class CopilotLocator {
 	}
 
 	private Optional<Path> nodeCommandToPath(String command) {
-		ProcessBuilder pb = new ProcessBuilder(command, "--eval", "console.log(process.execPath)");
+		return checkOutput(List.of(command, "--eval", "console.log(process.execPath)")).map(Path::of).filter(path -> {
+			if (!Files.isExecutable(path)) {
+				log.accept("Not an executable: " + privacyFilter(path.toString()));
+				return false;
+			}
+			return true;
+		});
+	}
+
+	private Optional<String> checkOutput(List<String> command) {
+		ProcessBuilder pb = new ProcessBuilder(command);
 		pb.redirectError(Redirect.PIPE);
 		Process process;
 		try {
@@ -171,6 +171,7 @@ public class CopilotLocator {
 				process = pb.start();
 			} catch (IOException e) {
 				// Cannot run program "node"
+				// There is not such program on PATH
 				return Optional.empty();
 			}
 			try {
@@ -178,9 +179,10 @@ public class CopilotLocator {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
-			Path result;
+			String result;
 			try (InputStream inputStream = process.getInputStream()) {
-				result = Path.of(readAll(inputStream).trim());
+				// Warning: will hang forever if error stream overflows OS buffer
+				result = readAll(inputStream).trim();
 			}
 			String error;
 			try (InputStream inputStream = process.getErrorStream()) {
@@ -188,11 +190,9 @@ public class CopilotLocator {
 			}
 
 			if (process.waitFor() != 0) {
-				log.accept("Failed to run " + command + ":\n" + error);
-				return Optional.empty();
-			}
-			if (!Files.isExecutable(result)) {
-				log.accept("Not an executable: " + result);
+				log.accept("Failed to run \""
+						+ command.stream().map(CopilotLocator::privacyFilter).collect(Collectors.joining(" ")) + "\":\n"
+						+ error);
 				return Optional.empty();
 			}
 			return Optional.of(result);
