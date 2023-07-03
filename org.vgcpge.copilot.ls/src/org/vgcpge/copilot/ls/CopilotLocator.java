@@ -1,8 +1,14 @@
 package org.vgcpge.copilot.ls;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ProcessBuilder.Redirect;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,11 +19,17 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import com.google.common.base.Joiner;
+import com.google.common.io.MoreFiles;
+import com.google.common.io.RecursiveDeleteOption;
 
 public class CopilotLocator {
 	private static final String NO_COPILOT_TEMPLATE = "Copilot is not installed. Install Github Copilot for Nvim: https://docs.github.com/en/copilot/getting-started-with-github-copilot?tool=neovim\nTested locations:\n%s";
@@ -83,18 +95,94 @@ public class CopilotLocator {
 	}
 
 	private final List<String> testedAgentLocations = new ArrayList<>();
+	private Path persistentStorage = null;
+
+	public static <T> Stream<T> lazy(Supplier<Stream<T>> supplier) {
+		return Stream.generate(supplier).limit(1).flatMap(Function.identity());
+	}
 
 	public Stream<Path> availableAgents() {
 		testedAgentLocations.clear();
-		return configurationLocations().stream() //
-				.map(location -> location.resolve(NVIM_RELATIVE_PATH)) //
+		Stream<Path> externalLocations = configurationLocations().stream() //
+				.map(location -> location.resolve(NVIM_RELATIVE_PATH));
+		Stream<Path> downloadedAgent = lazy(() -> downloadAgent().stream());
+		return Stream.concat(externalLocations, downloadedAgent) //
 				.peek(path -> testedAgentLocations.add(privacyFilter(path.toString()))) //
 				.filter(Files::isRegularFile) //
 				.filter(Files::isReadable);
 	}
 
+	private Optional<Path> downloadAgent() {
+		if (persistentStorage == null) {
+			return Optional.empty();
+		}
+		URL downloadURI;
+		try {
+			downloadURI = new URL("https://codeload.github.com/github/copilot.vim/zip/refs/heads/release");
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+		Path destination = persistentStorage.resolve("downloaded-agent");
+		Path result = destination.resolve("copilot.vim-release").resolve("dist").resolve("agent.js");
+		if (Files.exists(result)) {
+			return Optional.of(result);
+		}
+		
+		try {
+			if (Files.exists(destination)) {
+				MoreFiles.deleteRecursively(destination, RecursiveDeleteOption.ALLOW_INSECURE);
+			}
+			Path tempFile;
+			try {
+				tempFile = Files.createTempFile("copilot-agent", ".zip");
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+			try (InputStream in = downloadURI.openStream()) {
+				try (ReadableByteChannel rbc = Channels.newChannel(in);
+						FileOutputStream fos = new FileOutputStream(tempFile.toFile());
+						FileChannel channel = fos.getChannel()) {
+					channel.transferFrom(rbc, 0, Long.MAX_VALUE);
+				}
+				// unzip
+				try (ZipInputStream zipIn = new ZipInputStream(Files.newInputStream(tempFile))) {
+					ZipEntry entry = zipIn.getNextEntry();
+					while (entry != null) {
+						Path filePath = destination.resolve(entry.getName());
+						if (!entry.isDirectory()) {
+							Files.createDirectories(filePath.getParent());
+							Files.copy(zipIn, filePath);
+						}
+						zipIn.closeEntry();
+						entry = zipIn.getNextEntry();
+					}
+				}
+			} finally {
+				Files.deleteIfExists(tempFile);
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+		if (!Files.exists(result)) {
+			throw new RuntimeException("Archive downloaded from " + downloadURI + " is missing agent.js file");
+		}
+		return Optional.of(result);
+	}
+
 	public Stream<Path> availableNodeExecutables() {
 		return commandCandidates().map(this::nodeCommandToPath).flatMap(Optional::stream);
+	}
+
+	/** A location to cache useful files. For example - agent download. */
+	public void setPersistentStorageLocation(Path path) {
+		if (!Files.isDirectory(path)) {
+			throw new IllegalArgumentException(path + " is not a directory");
+		}
+		if (!Files.isWritable(path)) {
+			throw new IllegalArgumentException(path + " is not writable");
+		}
+		this.persistentStorage = Objects.requireNonNull(path);
 	}
 
 	private Stream<String> commandCandidates() {

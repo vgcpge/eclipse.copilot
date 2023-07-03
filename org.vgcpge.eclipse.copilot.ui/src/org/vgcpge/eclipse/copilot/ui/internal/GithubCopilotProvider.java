@@ -33,7 +33,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public final class GithubCopilotProvider implements StreamConnectionProvider {
 	private final SafeCloser closer = new SafeCloser();
 	private final ILog LOG = Platform.getLog(GithubCopilotProvider.class);
-	
 
 	private final ExecutorService executorService;
 	private final PipedInputStream input;
@@ -56,9 +55,17 @@ public final class GithubCopilotProvider implements StreamConnectionProvider {
 				closer.register(new PipedOutputStream(input)));
 		CopilotLocator locator = new CopilotLocator(LOG::info);
 		IPreferenceStore preferenceStore = Configuration.preferenceStore();
-		locator.setNodeJs(preferenceStore.getString(Configuration.NODE_JS_EXECUTABLE_KEY));
-		locator.setAgentJs(preferenceStore.getString(Configuration.AGENT_JS_KEY));
-		closer.register(new LanguageServer(upstream, locator.start(), executorService, Configuration.getProxyConfiguration()));
+		String nodeLocation = preferenceStore.getString(Configuration.NODE_JS_EXECUTABLE_KEY);
+		if (!nodeLocation.isEmpty()) {
+			locator.setNodeJs(nodeLocation);
+		}
+
+		String agentLocation = preferenceStore.getString(Configuration.AGENT_JS_KEY);
+		if (!agentLocation.isEmpty()) {
+			locator.setAgentJs(agentLocation);
+		}
+		closer.register(
+				new LanguageServer(upstream, locator.start(), executorService, Configuration.getProxyConfiguration()));
 		closer.register(output);
 	}
 
