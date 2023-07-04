@@ -11,8 +11,7 @@ This integration is unofficial. Consider trying Copilot with [officially support
 Copilot is a cloud-based service provided by Github and only works with [a paid subscription](https://github.com/settings/copilot). 
 
 # Prerequisites
-- [Copilot for Neovim](https://docs.github.com/en/copilot/getting-started-with-github-copilot?tool=neovim) (no need for Neovim itself)
-- Node.js [any version except 18](https://docs.github.com/en/copilot/getting-started-with-github-copilot?tool=neovim#prerequisites-3)
+- Node.js or "Node.js embedder from Wild Web Developer"
 - Java 17 or newer
 - Eclipse IDE should be configured to use Java 17 or newer
 
