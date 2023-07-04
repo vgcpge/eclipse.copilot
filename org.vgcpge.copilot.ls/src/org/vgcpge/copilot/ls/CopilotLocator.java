@@ -131,6 +131,7 @@ public class CopilotLocator {
 			return Optional.of(result);
 		}
 		
+		log.accept("Downloading agent to " + privacyFilter(destination.toString()));
 		try {
 			if (Files.exists(destination)) {
 				MoreFiles.deleteRecursively(destination, RecursiveDeleteOption.ALLOW_INSECURE);

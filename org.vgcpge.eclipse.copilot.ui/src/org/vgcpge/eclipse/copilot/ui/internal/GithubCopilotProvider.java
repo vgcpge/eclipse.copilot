@@ -56,6 +56,7 @@ public final class GithubCopilotProvider implements StreamConnectionProvider {
 				closer.register(new OrphanPipedInputStream(output)), //
 				closer.register(new PipedOutputStream(input)));
 		CopilotLocator locator = new CopilotLocator(LOG::info);
+		locator.setPersistentStorageLocation(Configuration.getPersistentStorage());
 		IPreferenceStore preferenceStore = Configuration.preferenceStore();
 		String nodeLocation = preferenceStore.getString(Configuration.NODE_JS_EXECUTABLE_KEY);
 		if (!nodeLocation.isEmpty() && Files.exists(Path.of(nodeLocation))) {

@@ -2,13 +2,18 @@ package org.vgcpge.eclipse.copilot.ui.internal;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Optional;
 
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.osgi.service.datalocation.Location;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -78,6 +83,25 @@ final class Configuration {
 				// thread, just return
 				return;
 			throw e;
+		}
+	}
+
+	public static Path getPersistentStorage() {
+		Location location = Platform.getConfigurationLocation();
+		if (location == null) {
+			throw new IllegalArgumentException("Platform has no configuration location");
+		}
+		URL configURL = location.getURL();
+		if (configURL != null && configURL.getProtocol().equals("file")) { //$NON-NLS-1$
+			Path target = Path.of(configURL.getFile(), PreferenceInitializer.PLUGIN_ID);
+			try {
+				Files.createDirectories(target);
+			} catch (IOException e) {
+				throw new RuntimeException("Failed to create " + target, e);
+			}
+			return target;
+		} else {
+			throw new IllegalStateException("Unsupported configuration location " + configURL);
 		}
 	}
 
