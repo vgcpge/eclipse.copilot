@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -56,13 +58,17 @@ public final class GithubCopilotProvider implements StreamConnectionProvider {
 		CopilotLocator locator = new CopilotLocator(LOG::info);
 		IPreferenceStore preferenceStore = Configuration.preferenceStore();
 		String nodeLocation = preferenceStore.getString(Configuration.NODE_JS_EXECUTABLE_KEY);
-		if (!nodeLocation.isEmpty()) {
+		if (!nodeLocation.isEmpty() && Files.exists(Path.of(nodeLocation))) {
 			locator.setNodeJs(nodeLocation);
+		} else {
+			LOG.error("Node.js executable not found. Please, set it in Preferences/Language Servers/Copilot");
 		}
 
 		String agentLocation = preferenceStore.getString(Configuration.AGENT_JS_KEY);
-		if (!agentLocation.isEmpty()) {
+		if (!agentLocation.isEmpty() && Files.exists(Path.of(agentLocation))) {
 			locator.setAgentJs(agentLocation);
+		} else {
+			LOG.error("Agent.js not found. Please, set it in Preferences/Language Servers/Copilot");
 		}
 		closer.register(
 				new LanguageServer(upstream, locator.start(), executorService, Configuration.getProxyConfiguration()));

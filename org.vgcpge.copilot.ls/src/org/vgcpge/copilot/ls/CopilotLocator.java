@@ -34,8 +34,11 @@ import com.google.common.io.RecursiveDeleteOption;
 public class CopilotLocator {
 	private static final String NO_COPILOT_TEMPLATE = "Copilot is not installed. Install Github Copilot for Nvim: https://docs.github.com/en/copilot/getting-started-with-github-copilot?tool=neovim\nTested locations:\n%s";
 	private static final String NO_NODE_TEMPLATE = "Can't locate Node.js. Configure PATH.\nTested locations:\n%s";
-	private static final Path NVIM_RELATIVE_PATH = Path.of("nvim", "pack", "github", "start", "copilot.vim", "copilot",
-			"dist", "agent.js");
+	private static final List<Path> NVIM_RELATIVE_PATHS = List.of(//
+			Path.of("nvim", "pack", "github", "start", "copilot.vim", "copilot", "dist", "agent.js"), //
+			Path.of("nvim", "pack", "github", "start", "copilot.vim", "dist", "agent.js"),
+			Path.of(".vim", "pack", "github", "start", "copilot.vim", "dist", "agent.js"),
+			Path.of(".vim", "pack", "github", "start", "copilot.vim", "copilot", "dist", "agent.js"));
 	private static final List<Path> NODE_PATH_CANDIDATES = List.of(Paths.get("/opt/homebrew/bin/node"));
 
 	private final Consumer<String> log;
@@ -104,7 +107,7 @@ public class CopilotLocator {
 	public Stream<Path> availableAgents() {
 		testedAgentLocations.clear();
 		Stream<Path> externalLocations = configurationLocations().stream() //
-				.map(location -> location.resolve(NVIM_RELATIVE_PATH));
+		.flatMap(location -> NVIM_RELATIVE_PATHS.stream().map(relative -> location.resolve(relative)));
 		Stream<Path> downloadedAgent = lazy(() -> downloadAgent().stream());
 		return Stream.concat(externalLocations, downloadedAgent) //
 				.peek(path -> testedAgentLocations.add(privacyFilter(path.toString()))) //
@@ -224,6 +227,7 @@ public class CopilotLocator {
 	private static List<Path> configurationLocations() {
 		var result = new ArrayList<Path>();
 		String home = System.getProperty("user.home");
+		result.add(Paths.get(home));
 		result.add(Paths.get(home).resolve(".config"));
 		String data = System.getenv("LOCALAPPDATA");
 		if (data != null) {
