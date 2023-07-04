@@ -11,9 +11,7 @@ This integration is unofficial. Consider trying Copilot with [officially support
 Copilot is a cloud-based service provided by Github and only works with [a paid subscription](https://github.com/settings/copilot). 
 
 # Prerequisites
-- Node.js or "Node.js embedder from Wild Web Developer"
-- Java 17 or newer
-- Eclipse IDE should be configured to use Java 17 or newer
+- External Node.js or "Node.js embedder from Wild Web Developer" feature
 
 # Usage
 - Copy the link to update site: https://vgcpge.github.io/eclipse.copilot/
