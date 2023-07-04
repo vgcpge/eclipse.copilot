@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -33,7 +35,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public final class GithubCopilotProvider implements StreamConnectionProvider {
 	private final SafeCloser closer = new SafeCloser();
 	private final ILog LOG = Platform.getLog(GithubCopilotProvider.class);
-	
 
 	private final ExecutorService executorService;
 	private final PipedInputStream input;
@@ -56,9 +57,21 @@ public final class GithubCopilotProvider implements StreamConnectionProvider {
 				closer.register(new PipedOutputStream(input)));
 		CopilotLocator locator = new CopilotLocator(LOG::info);
 		IPreferenceStore preferenceStore = Configuration.preferenceStore();
-		locator.setNodeJs(preferenceStore.getString(Configuration.NODE_JS_EXECUTABLE_KEY));
-		locator.setAgentJs(preferenceStore.getString(Configuration.AGENT_JS_KEY));
-		closer.register(new LanguageServer(upstream, locator.start(), executorService, Configuration.getProxyConfiguration()));
+		String nodeLocation = preferenceStore.getString(Configuration.NODE_JS_EXECUTABLE_KEY);
+		if (!nodeLocation.isEmpty() && Files.exists(Path.of(nodeLocation))) {
+			locator.setNodeJs(nodeLocation);
+		} else {
+			LOG.error("Node.js executable not found. Please, set it in Preferences/Language Servers/Copilot");
+		}
+
+		String agentLocation = preferenceStore.getString(Configuration.AGENT_JS_KEY);
+		if (!agentLocation.isEmpty() && Files.exists(Path.of(agentLocation))) {
+			locator.setAgentJs(agentLocation);
+		} else {
+			LOG.error("Agent.js not found. Please, set it in Preferences/Language Servers/Copilot");
+		}
+		closer.register(
+				new LanguageServer(upstream, locator.start(), executorService, Configuration.getProxyConfiguration()));
 		closer.register(output);
 	}
 

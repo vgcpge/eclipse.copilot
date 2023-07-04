@@ -22,10 +22,12 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	public void initializeDefaultPreferences() {
 		IPreferenceStore preferenceStore = Configuration.preferenceStore();
 		CopilotLocator locator = new CopilotLocator(LOG::warn);
-		String detected = availableNodeJsExcutables(locator).findFirst().get().toString();
-		preferenceStore.setDefault(Configuration.NODE_JS_EXECUTABLE_KEY, detected);
-		detected = locator.availableAgents().findFirst().get().toString();
-		preferenceStore.setDefault(Configuration.AGENT_JS_KEY, detected);
+		availableNodeJsExcutables(locator).map(Path::toString).findFirst().ifPresent(detected -> {
+			preferenceStore.setDefault(Configuration.NODE_JS_EXECUTABLE_KEY, detected);
+		});
+		locator.availableAgents().map(Path::toString).findFirst().ifPresent(detected -> {
+			preferenceStore.setDefault(Configuration.AGENT_JS_KEY, detected);
+		});
 	}
 
 	public Stream<Path> availableNodeJsExcutables(CopilotLocator locator) {

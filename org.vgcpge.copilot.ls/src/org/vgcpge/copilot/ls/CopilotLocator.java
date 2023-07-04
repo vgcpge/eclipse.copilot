@@ -21,8 +21,9 @@ import com.google.common.base.Joiner;
 public class CopilotLocator {
 	private static final String NO_COPILOT_TEMPLATE = "Copilot is not installed. Install Github Copilot for Nvim: https://docs.github.com/en/copilot/getting-started-with-github-copilot?tool=neovim\nTested locations:\n%s";
 	private static final String NO_NODE_TEMPLATE = "Can't locate Node.js. Configure PATH.\nTested locations:\n%s";
-	private static final Path NVIM_RELATIVE_PATH = Path.of("nvim", "pack", "github", "start", "copilot.vim", "copilot",
-			"dist", "agent.js");
+	private static final List<Path> NVIM_RELATIVE_PATHS = List.of(//
+			Path.of("nvim", "pack", "github", "start", "copilot.vim", "copilot", "dist", "agent.js"), //
+			Path.of("nvim", "pack", "github", "start", "copilot.vim", "dist", "agent.js"));
 	private static final List<Path> NODE_PATH_CANDIDATES = List.of(Paths.get("/opt/homebrew/bin/node"));
 
 	private final Consumer<String> log;
@@ -82,8 +83,9 @@ public class CopilotLocator {
 	private final List<String> testedAgentLocations = new ArrayList<>();
 	public Stream<Path> availableAgents() {
 		testedAgentLocations.clear();
-		return configurationLocations().stream() //
-				.map(location -> location.resolve(NVIM_RELATIVE_PATH)) //
+		Stream<Path> externalLocations = configurationLocations().stream() //
+				.flatMap(location -> NVIM_RELATIVE_PATHS.stream().map(relative -> location.resolve(relative)));
+		return externalLocations //
 				.peek(path -> testedAgentLocations.add(privacyFilter(path.toString()))) //
 				.filter(Files::isRegularFile) //
 				.filter(Files::isReadable);
