@@ -28,4 +28,5 @@ public interface CopilotLanguageServer extends LanguageServer {
 
 	@JsonRequest
 	CompletableFuture<Void> setEditorInfo(EditorInfoParam param);
+	
 }

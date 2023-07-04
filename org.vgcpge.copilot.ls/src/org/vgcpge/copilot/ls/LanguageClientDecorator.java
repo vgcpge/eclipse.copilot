@@ -8,6 +8,7 @@ import org.eclipse.lsp4j.RegistrationParams;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.vgcpge.copilot.ls.rpc.CopilotMessageParams;
+import org.vgcpge.copilot.ls.rpc.FeatureFlagsNotificationParams;
 
 public class LanguageClientDecorator extends DelegatingLanguageClient {
 
@@ -35,5 +36,13 @@ public class LanguageClientDecorator extends DelegatingLanguageClient {
 		
 		return; // suppress as LSP4e does not support progress notifications without job identifiers
 	}
+	
+	/**{"jsonrpc":"2.0","method":"featureFlagsNotification","params":{"ssc":false,"rt":false,"chat":true}}*/
+	@SuppressWarnings("unused")
+	@JsonNotification
+	public void featureFlagsNotification(FeatureFlagsNotificationParams params) {
+		
+	}
+
 	
 }
