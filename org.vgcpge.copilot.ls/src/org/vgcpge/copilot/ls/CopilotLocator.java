@@ -23,7 +23,9 @@ public class CopilotLocator {
 	private static final String NO_NODE_TEMPLATE = "Can't locate Node.js. Configure PATH.\nTested locations:\n%s";
 	private static final List<Path> NVIM_RELATIVE_PATHS = List.of(//
 			Path.of("nvim", "pack", "github", "start", "copilot.vim", "copilot", "dist", "agent.js"), //
-			Path.of("nvim", "pack", "github", "start", "copilot.vim", "dist", "agent.js"));
+			Path.of("nvim", "pack", "github", "start", "copilot.vim", "dist", "agent.js"),
+			Path.of(".vim", "pack", "github", "start", "copilot.vim", "dist", "agent.js"),
+			Path.of(".vim", "pack", "github", "start", "copilot.vim", "copilot", "dist", "agent.js"));
 	private static final List<Path> NODE_PATH_CANDIDATES = List.of(Paths.get("/opt/homebrew/bin/node"));
 
 	private final Consumer<String> log;
@@ -62,8 +64,10 @@ public class CopilotLocator {
 		}
 		nodeLocation = path;
 	}
-	
-	/** Force use of a given Copilot agent. Disable autodetect.
+
+	/**
+	 * Force use of a given Copilot agent. Disable autodetect.
+	 * 
 	 * @param agentJsPath - a path to JavaScript entrypoint. Usually named agent.js.
 	 */
 	public void setAgentJs(String agentJsPath) {
@@ -79,8 +83,9 @@ public class CopilotLocator {
 		}
 		agentLocation = path;
 	}
-	
+
 	private final List<String> testedAgentLocations = new ArrayList<>();
+
 	public Stream<Path> availableAgents() {
 		testedAgentLocations.clear();
 		Stream<Path> externalLocations = configurationLocations().stream() //
@@ -139,8 +144,7 @@ public class CopilotLocator {
 		if (agentLocation != null) {
 			return agentLocation;
 		}
- 		return availableAgents()
-				.findFirst() //
+		return availableAgents().findFirst() //
 				.orElseThrow(() -> new IllegalStateException(
 						String.format(NO_COPILOT_TEMPLATE, Joiner.on("\n").join(testedAgentLocations))));
 	}
@@ -148,6 +152,7 @@ public class CopilotLocator {
 	private static List<Path> configurationLocations() {
 		var result = new ArrayList<Path>();
 		String home = System.getProperty("user.home");
+		result.add(Paths.get(home));
 		result.add(Paths.get(home).resolve(".config"));
 		String data = System.getenv("LOCALAPPDATA");
 		if (data != null) {
