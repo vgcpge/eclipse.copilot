@@ -3,6 +3,9 @@
    <feature id="org.vgcpge.eclipse.features.copilot">
       <category name="org.vgcpge.copilot"/>
    </feature>
+   <feature id="org.eclipse.wildwebdeveloper.embedder.node.feature">
+      <category name="org.vgcpge.copilot"/>
+   </feature>
    <bundle id="org.vgcpge.copilot.ls.source">
       <category name="org.vgcpge.copilot.sdk"/>
    </bundle>
