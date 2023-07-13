@@ -14,6 +14,8 @@ Copilot is a cloud-based service provided by GitHub and only works with [a paid 
 - External Node.js or "Node.js embedder from Wild Web Developer" feature
 
 # Usage
+
+See [installation video demo](https://youtu.be/B_QZao3abBw) or follow steps:
 - Copy the link to the update site: https://vgcpge.github.io/eclipse.copilot/
 - Follow the [instructions](https://help.eclipse.org/latest/topic/org.eclipse.platform.doc.user/tasks/tasks-124.htm) to install the Copilot feature from the update site.
 - Warning dialogs "Trust Authorities" and "Trust Artifacts" will request confirmations. Install at your own risk and consider gifting me a code-signing certificate.
