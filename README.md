@@ -11,7 +11,7 @@ This integration is unofficial. Consider trying Copilot with [officially support
 Copilot is a cloud-based service provided by GitHub and only works with [a paid subscription](https://github.com/settings/copilot). 
 
 # Prerequisites
-- External Node.js or "Node.js embedder from Wild Web Developer" feature
+- External Node.js or "Node.js embedder from Wild Web Developer" (1.0.0 or newer) feature
 
 # Usage
 
