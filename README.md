@@ -14,8 +14,10 @@ Copilot is a cloud-based service provided by GitHub and only works with [a paid 
 - External Node.js or "Node.js embedder from Wild Web Developer" feature
 
 # Usage
+
+See [installation video demo](https://youtu.be/B_QZao3abBw) or follow steps:
 - Copy the link to the update site: https://vgcpge.github.io/eclipse.copilot/
-- Follow the[instructions](https://help.eclipse.org/latest/topic/org.eclipse.platform.doc.user/tasks/tasks-124.htm) to install the Copilot feature from the update site.
+- Follow the [instructions](https://help.eclipse.org/latest/topic/org.eclipse.platform.doc.user/tasks/tasks-124.htm) to install the Copilot feature from the update site.
 - Warning dialogs "Trust Authorities" and "Trust Artifacts" will request confirmations. Install at your own risk and consider gifting me a code-signing certificate.
 - If necessary, configure Preferences/Language Servers/Copilot/Node.js executable
 - Hit <kbd>Ctrl+Space</kbd> for [content-assist](https://www.tutorialspoint.com/eclipse/eclipse_content_assist.htm) in the ["Generic Text Editor"](https://projects.eclipse.org/projects/technology.tm4e) or the ["Java Editor"](https://www.eclipse.org/jdt/) (requires [Java support](#java) to be installed separately). Any other editor supporting the standard APIs will work too (notably, "Text Editor" does not support content-assist).
