@@ -14,7 +14,7 @@ Require-Bundle: org.eclipse.lsp4e;bundle-version="0.15.0",
  org.eclipse.core.net;bundle-version="1.4.0",
  org.eclipse.osgi;bundle-version="3.0.0",
  org.eclipse.core.runtime,
- org.eclipse.wildwebdeveloper.embedder.node;bundle-version="1.0.2";resolution:=optional,
+ org.eclipse.wildwebdeveloper.embedder.node;bundle-version="1.0.0";resolution:=optional,
  org.eclipse.ui;bundle-version="3.0.0"
 Automatic-Module-Name: org.vgcpge.eclipse.copilot.ui
 Bundle-RequiredExecutionEnvironment: JavaSE-17
