@@ -11,10 +11,12 @@ This integration is unofficial. Consider trying Copilot with [officially support
 Copilot is a cloud-based service provided by GitHub and only works with [a paid subscription](https://github.com/settings/copilot). 
 
 # Prerequisites
-- External Node.js or "Node.js embedder from Wild Web Developer" feature
+- Eclipse 2022-09 (4.25) or newer
+- Node.js
+    - external Node.js or
+    - [Node.js embedder from Wild Web Developer 1.0.0](https://download.eclipse.org/wildwebdeveloper/releases/latest/) or newer
 
 # Usage
-
 See [installation video demo](https://youtu.be/B_QZao3abBw) or follow steps:
 - Copy the link to the update site: https://vgcpge.github.io/eclipse.copilot/
 - Follow the [instructions](https://help.eclipse.org/latest/topic/org.eclipse.platform.doc.user/tasks/tasks-124.htm) to install the Copilot feature from the update site.
