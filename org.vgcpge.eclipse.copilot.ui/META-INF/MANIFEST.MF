@@ -4,8 +4,8 @@ Bundle-Name: Unoffical Github Copilot
 Bundle-SymbolicName: org.vgcpge.eclipse.copilot.ui;singleton:=true
 Bundle-Vendor: VGCPGE
 Bundle-Version: 0.0.17.qualifier
-Require-Bundle: org.eclipse.lsp4e;bundle-version="0.13.6",
- org.vgcpge.copilot.ls;bundle-version="0.0.8",
+Require-Bundle: org.eclipse.lsp4e;bundle-version="0.15.0",
+ org.vgcpge.copilot.ls;bundle-version="0.0.17",
  com.google.guava;bundle-version="30.0.0",
  org.eclipse.jdt.annotation;bundle-version="1.0.0",
  org.eclipse.lsp4j.jsonrpc,
