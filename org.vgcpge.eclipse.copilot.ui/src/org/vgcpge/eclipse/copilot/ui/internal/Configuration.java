@@ -1,5 +1,6 @@
 package org.vgcpge.eclipse.copilot.ui.internal;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -93,7 +94,7 @@ final class Configuration {
 		}
 		URL configURL = location.getURL();
 		if (configURL != null && configURL.getProtocol().equals("file")) { //$NON-NLS-1$
-			Path target = Path.of(configURL.getFile(), PreferenceInitializer.PLUGIN_ID);
+			Path target = new File(configURL.getFile(), PreferenceInitializer.PLUGIN_ID).toPath();
 			try {
 				Files.createDirectories(target);
 			} catch (IOException e) {
