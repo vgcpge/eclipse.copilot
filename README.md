@@ -12,9 +12,7 @@ Copilot is a cloud-based service provided by GitHub and only works with [a paid 
 
 # Prerequisites
 - Eclipse 2022-12 (4.26) or newer
-- Node.js
-    - external Node.js or
-    - [Node.js embedder from Wild Web Developer 1.0.0](https://download.eclipse.org/wildwebdeveloper/releases/latest/) or newer
+- Node.js 19 or newer
 
 # Usage
 See [installation video demo](https://youtu.be/B_QZao3abBw) or follow steps:
