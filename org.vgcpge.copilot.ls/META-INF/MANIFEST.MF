@@ -7,7 +7,6 @@ Bundle-Version: 0.0.20.qualifier
 Export-Package: org.vgcpge.copilot.ls
 Require-Bundle: org.eclipse.lsp4j.jsonrpc,
  org.eclipse.lsp4j;bundle-version="0.14.0",
- com.google.gson;bundle-version="2.8.9",
  com.google.guava
 Automatic-Module-Name: org.vgcpge.copilot.ls
 Bundle-RequiredExecutionEnvironment: JavaSE-17
