@@ -68,8 +68,9 @@ public class CopilotLocator {
 			throw new IllegalArgumentException(location + " is not executable");
 		}
 		try {
-			if (!isValidNode(path.toString())) {
-				throw new IllegalArgumentException(location + " is not a valid Node.js executable");
+			String error = validateNode(path.toString());
+			if (!error.isEmpty()) {	
+				throw new IllegalArgumentException(error);
 			}
 		} catch (Exception e) {
 			throw new IllegalArgumentException(location + " is not a valid Node.js executable", e);
@@ -201,12 +202,17 @@ public class CopilotLocator {
 				String.format(NO_NODE_TEMPLATE, commandCandidates().collect(Collectors.joining("\n")))));
 	}
 
-	private boolean isValidNode(String nodeCommand) throws InterruptedException, IOException {
+	/** @return a reason for incompatibility, empty if compatible 
+	 * */
+	public String validateNode(String nodeCommand) throws InterruptedException, IOException {
 		Optional<String> result = checkOutput(List.of(nodeCommand, "--version")).filter(Predicate.not(String::isEmpty));
-		result.ifPresent(version -> {
+		return result.map(version -> {
+			if (version.startsWith("v18.")) {
+				return "Node.js " + privacyFilter(nodeCommand) + " has incompatible version: " + version + ". Required version: 19 or newer.";
+			}
 			log.accept("Node.js location: " + privacyFilter(nodeCommand) + ". Version: " + version);
-		});
-		return result.isPresent();
+			return "";
+		}).orElse("Can't find " + nodeCommand);
 	}
 
 	private static String readAll(InputStream input) {
