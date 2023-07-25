@@ -1,6 +1,5 @@
 package org.vgcpge.eclipse.copilot.ui.internal;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
@@ -38,20 +37,12 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		// instance
 		Stream<Path> fromWildWeb = CopilotLocator.lazy(PreferenceInitializer::findWildWebNodeJs)
 				.filter(path -> {
-					try {
-						String error = locator.validateNode(path.toString());
-						if (!error.isEmpty()) {
-							LOG.info(error);
-							return false;
-						}
-						return true;
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
-						return false;
-					} catch (IOException e) {
-						LOG.error("Can't validate Node.js" + path, e);
+					String error = locator.validateNode(path.toString());
+					if (!error.isEmpty()) {
+						LOG.info(error);
 						return false;
 					}
+					return true;
 				});
 		
 		return Stream.concat(fromLib, fromWildWeb);

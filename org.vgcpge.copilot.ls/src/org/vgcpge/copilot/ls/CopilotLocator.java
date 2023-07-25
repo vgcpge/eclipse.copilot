@@ -69,7 +69,7 @@ public class CopilotLocator {
 		}
 		try {
 			String error = validateNode(path.toString());
-			if (!error.isEmpty()) {	
+			if (!error.isEmpty()) {
 				throw new IllegalArgumentException(error);
 			}
 		} catch (Exception e) {
@@ -108,7 +108,7 @@ public class CopilotLocator {
 	public Stream<Path> availableAgents() {
 		testedAgentLocations.clear();
 		Stream<Path> externalLocations = configurationLocations().stream() //
-		.flatMap(location -> NVIM_RELATIVE_PATHS.stream().map(relative -> location.resolve(relative)));
+				.flatMap(location -> NVIM_RELATIVE_PATHS.stream().map(relative -> location.resolve(relative)));
 		Stream<Path> downloadedAgent = lazy(() -> downloadAgent().stream());
 		return Stream.concat(externalLocations, downloadedAgent) //
 				.peek(path -> testedAgentLocations.add(privacyFilter(path.toString()))) //
@@ -131,7 +131,7 @@ public class CopilotLocator {
 		if (Files.exists(result)) {
 			return Optional.of(result);
 		}
-		
+
 		log.accept("Downloading agent to " + privacyFilter(destination.toString()));
 		try {
 			if (Files.exists(destination)) {
@@ -202,15 +202,17 @@ public class CopilotLocator {
 				String.format(NO_NODE_TEMPLATE, commandCandidates().collect(Collectors.joining("\n")))));
 	}
 
-	/** @return a reason for incompatibility, empty if compatible 
-	 * */
-	public String validateNode(String nodeCommand) throws InterruptedException, IOException {
+	/**
+	 * @return a reason for incompatibility, empty if compatible
+	 */
+	public String validateNode(String nodeCommand) {
 		Optional<String> result = checkOutput(List.of(nodeCommand, "--version")).filter(Predicate.not(String::isEmpty));
 		return result.map(version -> {
 			String os = System.getProperty("os.name").toLowerCase();
 			boolean isWindows = os.contains("win");
 			if (version.startsWith("v18.") && isWindows) {
-				return "Node.js " + privacyFilter(nodeCommand) + " has incompatible version: " + version + ". Required version: 19 or newer.";
+				return "Node.js " + privacyFilter(nodeCommand) + " has incompatible version: " + version
+						+ ". Required version: 19 or newer.";
 			}
 			log.accept("Node.js location: " + privacyFilter(nodeCommand) + ". Version: " + version);
 			return "";
@@ -257,6 +259,13 @@ public class CopilotLocator {
 		return checkOutput(List.of(command, "--eval", "console.log(process.execPath)")).map(Path::of).filter(path -> {
 			if (!Files.isExecutable(path)) {
 				log.accept("Not an executable: " + privacyFilter(path.toString()));
+				return false;
+			}
+			return true;
+		}).filter(path -> {
+			String error = validateNode(path.toString());
+			if (!error.isEmpty()) {
+				log.accept(error);
 				return false;
 			}
 			return true;
