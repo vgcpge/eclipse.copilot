@@ -207,7 +207,9 @@ public class CopilotLocator {
 	public String validateNode(String nodeCommand) throws InterruptedException, IOException {
 		Optional<String> result = checkOutput(List.of(nodeCommand, "--version")).filter(Predicate.not(String::isEmpty));
 		return result.map(version -> {
-			if (version.startsWith("v18.")) {
+			String os = System.getProperty("os.name").toLowerCase();
+			boolean isWindows = os.contains("win");
+			if (version.startsWith("v18.") && isWindows) {
 				return "Node.js " + privacyFilter(nodeCommand) + " has incompatible version: " + version + ". Required version: 19 or newer.";
 			}
 			log.accept("Node.js location: " + privacyFilter(nodeCommand) + ". Version: " + version);
