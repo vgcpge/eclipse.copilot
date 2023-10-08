@@ -11,7 +11,7 @@ This integration is unofficial. Consider trying Copilot with [officially support
 Copilot is a cloud-based service provided by GitHub and only works with [a paid subscription](https://github.com/settings/copilot). 
 
 # Prerequisites
-- [Eclipse 2022-12 (4.26) or newer](https://www.eclipse.org/downloads/)
+- [Eclipse 2022-12 (4.26) or newer](https://www.eclipse.org/downloads/), or [its update-site](https://download.eclipse.org/releases/2023-12/)
 - [Node.js 19 or newer](https://nodejs.org/en/download/current)
 
 # Usage
