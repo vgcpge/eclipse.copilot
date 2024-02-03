@@ -10,6 +10,10 @@
 This integration is unofficial. Consider trying Copilot with [officially supported tools](https://docs.github.com/en/copilot/getting-started-with-github-copilot).
 Copilot is a cloud-based service provided by GitHub and only works with [a paid subscription](https://github.com/settings/copilot). 
 
+# Alternatives
+Closed-source [Copilot4Eclipse](https://marketplace.eclipse.org/content/copilot4eclipse) by [Genuitec](https://www.genuitec.com/products/copilot4eclipse/)
+
+
 # Prerequisites
 - [Eclipse 2022-12 (4.26) or newer](https://www.eclipse.org/downloads/), or [its update-site](https://download.eclipse.org/releases/2023-12/)
 - [Node.js 19 or newer](https://nodejs.org/en/download/current)
